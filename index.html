@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>出行清单 · 打包不遗漏</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#fff; --ink:#141a2b; --muted:#5b6473; --line:#e6e9f2;
+    --primary:#2f6bed; --primary-soft:#eef3ff; --primary-dark:#1f4cc0;
+    --ok:#12a06a; --danger:#c5352f; --danger-soft:#fdeeee;
+    --shadow:0 10px 30px rgba(22,34,64,.08); --radius:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:16px; line-height:1.5;
+  }
+  button,input,select{font:inherit;color:inherit}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px calc(40px + env(safe-area-inset-bottom))}
+
+  /* ---------- header ---------- */
+  .hero{
+    background:linear-gradient(135deg,#2f6bed 0%,#6a55e6 100%);
+    color:#fff;padding:22px 20px 26px;border-radius:0 0 22px 22px;margin:0 -16px 18px;
+  }
+  .hero-in{max-width:724px;margin:0 auto;display:flex;align-items:center;gap:14px}
+  .hero .logo{font-size:30px;line-height:1}
+  .hero h1{margin:0;font-size:21px;letter-spacing:.5px}
+  .hero p{margin:3px 0 0;font-size:13px;opacity:.85}
+  @media (min-width:792px){
+    .hero{margin:0 0 18px;border-radius:20px;padding:22px 24px}
+  }
+
+  /* ---------- generic ---------- */
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+  .label{font-size:14px;font-weight:700;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  .label .step{display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;align-items:center;justify-content:center}
+  .hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+  .btn{
+    border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px 14px;font-size:14px;
+    cursor:pointer;transition:.15s;
+  }
+  .btn:hover{border-color:#c8d2e8;background:#fafbff}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+  .btn.primary:hover{background:var(--primary-dark);border-color:var(--primary-dark)}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .btn.ghost:hover{background:#eef1f7;color:var(--ink)}
+  .btn.big{width:100%;padding:14px;font-size:16px;border-radius:12px;margin-top:16px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+  /* ---------- scene picker ---------- */
+  .scenes{display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:10px}
+  .scene{
+    position:relative;min-width:0;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:14px;
+    padding:12px 34px 13px 13px;cursor:pointer;transition:.15s;
+  }
+  .scene:hover{border-color:#b9c7e8}
+  .scene .ico{font-size:21px;line-height:1;display:block}
+  .scene .nm{display:block;font-weight:700;font-size:15px;margin-top:6px;overflow-wrap:anywhere}
+  .scene .sub{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+  .scene.on{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 3px rgba(47,107,237,.12)}
+  .scene.on::after{
+    content:"✓";position:absolute;top:11px;right:11px;width:17px;height:17px;border-radius:50%;
+    background:var(--primary);color:#fff;font-size:11px;line-height:17px;text-align:center;
+  }
+  @media (max-width:520px){ .scenes{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
+  /* ---------- days ---------- */
+  .stepper{display:flex;align-items:center;gap:14px}
+  .stepper .round{
+    width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:#fff;
+    font-size:20px;line-height:1;cursor:pointer;flex:0 0 auto;
+  }
+  .stepper .round:hover{border-color:var(--primary);color:var(--primary)}
+  .stepper .num{font-size:26px;font-weight:700;min-width:58px;text-align:center;font-variant-numeric:tabular-nums}
+  .stepper .unit{font-size:14px;color:var(--muted)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .chip:hover{border-color:var(--primary);color:var(--primary)}
+
+  /* ---------- resume banner ---------- */
+  .resume{border:1px dashed var(--primary);background:var(--primary-soft);border-radius:14px;padding:14px;margin-bottom:16px}
+  .resume b{font-size:15px}
+  .resume .row{margin-top:10px}
+
+  /* ---------- progress ---------- */
+  .prog{
+    position:sticky;top:env(safe-area-inset-top);z-index:5;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);
+    border-radius:14px;box-shadow:0 6px 18px rgba(22,34,64,.09);padding:13px 16px;margin-bottom:14px;
+  }
+  .prog .top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .prog .trip{font-weight:700;font-size:15px}
+  .prog .pct{font-size:22px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums}
+  .bar{height:8px;border-radius:8px;background:#e9edf6;overflow:hidden;margin-top:9px}
+  .bar i{display:block;height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#2f6bed,#12a06a);transition:width .35s ease}
+  .prog .meta{font-size:12.5px;color:var(--muted);margin-top:7px;display:flex;justify-content:space-between;gap:10px}
+  .acts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .acts .btn{width:100%;padding:10px 4px;font-size:13px;text-align:center;white-space:nowrap}
+  .acts .btn.key{background:var(--primary-soft);border-color:#cfdcff;color:var(--primary-dark);font-weight:600}
+  .btn.danger{color:var(--danger);border-color:#eccccb}
+  .btn.danger:hover{background:var(--danger-soft);border-color:#dfb2af;color:#a32b26}
+  .done-tip{margin-top:10px;background:#e6f6ee;border:1px solid #aeddc6;color:#0b6f4b;border-radius:10px;padding:10px 12px;font-size:13px}
+  .tools{padding:14px 16px}
+  .scene .tpl{
+    display:inline-block;font-size:11px;color:var(--primary-dark);background:#fff;
+    border:1px solid #a9c0f5;border-radius:5px;padding:1px 6px;margin-top:6px;
+  }
+  .tplhint{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--primary-dark);background:var(--primary-soft);border-radius:9px;padding:9px 11px;margin:12px 0 0}
+  .tplhint #tpl-hint-text{flex:1 1 190px;min-width:0}
+  .btn.mini{font-size:12.5px;padding:5px 10px;border-radius:8px;flex:0 0 auto}
+  .tplrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  .tplstate{font-size:13px;color:var(--muted);flex:1 1 100%;min-width:0}
+  .tplstate.dirty{color:var(--danger);font-weight:600}
+  .tplacts{display:flex;gap:8px;flex:1 1 auto}
+  .tplacts .btn{flex:1 1 0;padding:9px 8px;font-size:13px}
+  @media (max-width:520px){
+    .acts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+
+  /* ---------- groups & items ---------- */
+  .group{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:6px 16px 12px;margin-bottom:14px}
+  .ghead{display:flex;align-items:center;gap:9px;padding:12px 0 8px;border-bottom:1px solid var(--line)}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .gname{font-weight:700;font-size:15px}
+  .gcount{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .ghead .all{margin-left:auto;font-size:13px;color:var(--primary-dark);background:none;border:none;cursor:pointer;padding:9px 10px;border-radius:8px}
+  .ghead .all:hover{background:var(--primary-soft)}
+
+  .item{display:flex;align-items:center;gap:4px;padding:1px 0;border-bottom:1px solid #f2f4f9}
+  .item:last-child{border-bottom:none}
+  .hit{
+    flex:1;display:flex;align-items:center;gap:11px;background:none;border:none;cursor:pointer;
+    text-align:left;padding:12px 2px;min-width:0;min-height:44px;
+  }
+  .box{
+    width:22px;height:22px;border-radius:6px;border:1.8px solid #8792ac;flex:0 0 auto;position:relative;transition:.15s;background:#fff;
+  }
+  .hit:active .box{transform:scale(.88)}
+  .name{font-size:15px;transition:.15s;overflow-wrap:anywhere}
+  .tag{font-size:10.5px;color:var(--primary-dark);background:var(--primary-soft);border-radius:5px;padding:1px 6px;flex:0 0 auto}
+  .item.on .box{background:var(--ok);border-color:var(--ok)}
+  .item.on .box::after{
+    content:"";position:absolute;left:7px;top:3px;width:5px;height:11px;border:solid #fff;
+    border-width:0 2px 2px 0;transform:rotate(45deg);
+  }
+  .item.on .name{color:var(--muted);text-decoration:line-through}
+  .del{
+    width:44px;height:44px;border-radius:10px;border:none;background:none;color:#858ea4;font-size:20px;line-height:1;
+    cursor:pointer;flex:0 0 auto;
+  }
+  .del:hover{background:var(--danger-soft);color:var(--danger)}
+
+  /* ---------- add item card ---------- */
+  .addcard{border:1.5px dashed var(--primary);background:var(--primary-soft);box-shadow:none}
+  .addcard input{width:100%;border:1.5px solid #d7e0f5;border-radius:11px;padding:10px 12px;background:#fff}
+  .addcard input:focus,.addcard select:focus{outline:none;border-color:var(--primary)}
+  .addcard select{flex:1 1 auto;min-width:0;border:1.5px solid #d7e0f5;border-radius:11px;padding:10px 11px;background:#fff}
+  .addcard .row{margin-top:9px}
+
+  .empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:14px}
+  footer{font-size:12px;color:var(--muted);text-align:center;line-height:1.7;padding:6px 10px 0}
+  footer .warn{color:var(--danger)}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;
+    background:#20293c;color:#fff;border-radius:12px;padding:11px 14px;font-size:14px;
+    display:flex;align-items:center;gap:12px;box-shadow:0 12px 28px rgba(0,0,0,.28);max-width:90vw;
+  }
+  .toast button{background:none;border:none;color:#8fc2ff;font-size:14px;font-weight:700;cursor:pointer;padding:0}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-in">
+      <div class="logo">🧳</div>
+      <div>
+        <h1>出行清单</h1>
+        <p>按出行目的生成清单，逐项勾选，不靠回忆</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ 设置页 ============ -->
+  <section id="view-setup">
+    <div id="resume" class="resume" hidden></div>
+
+    <div class="card">
+      <h2 class="label"><span class="step">1</span>这次出行去做什么</h2>
+      <div id="scenes" class="scenes"></div>
+    </div>
+
+    <div class="card">
+      <h2 class="label"><span class="step">2</span>去几天</h2>
+      <div class="stepper">
+        <button class="round" id="minus" aria-label="减少一天">−</button>
+        <div class="num"><span id="days-num">3</span></div>
+        <button class="round" id="plus" aria-label="增加一天">＋</button>
+        <span class="unit">天</span>
+      </div>
+      <div class="chips" id="day-chips"></div>
+      <p class="hint">天数会影响衣物、洗漱用品的建议数量。</p>
+      <div class="tplhint" id="tpl-hint" hidden>
+        <span id="tpl-hint-text"></span>
+        <button class="btn mini" id="tpl-clear-setup">改用默认清单</button>
+      </div>
+      <button class="btn primary big" id="gen">生成打包清单</button>
+    </div>
+  </section>
+
+  <!-- ============ 清单页 ============ -->
+  <section id="view-list" hidden>
+    <div class="prog">
+      <div class="top">
+        <span class="trip" id="trip-title">—</span>
+        <span class="pct" id="trip-pct">0%</span>
+      </div>
+      <div class="bar"><i id="trip-bar"></i></div>
+      <div class="meta">
+        <span id="trip-count">0 / 0 件已装好</span>
+        <span id="trip-left">还剩 0 件</span>
+      </div>
+    </div>
+
+    <div class="card tools">
+      <div class="acts">
+        <button class="btn key" id="show-add">＋ 新增物品</button>
+        <button class="btn" id="clear-check">清空勾选</button>
+        <button class="btn" id="re-setup">重新设置</button>
+        <button class="btn danger" id="drop-list">删除清单</button>
+      </div>
+      <div class="done-tip" id="done-tip" hidden>全部装好了 ✈️ 出发前请再对照一次证件和手机。</div>
+      <div class="tplrow">
+        <span class="tplstate" id="tpl-state"></span>
+        <span class="tplacts">
+          <button class="btn" id="tpl-save">存为我的模板</button>
+          <button class="btn danger" id="tpl-clear" hidden>清除模板</button>
+        </span>
+      </div>
+    </div>
+
+    <div class="card addcard" id="addform" hidden>
+      <h2 class="label">＋ 新增一件要带的物品</h2>
+      <input id="new-name" type="text" maxlength="30" placeholder="名称，如：常备药、充电线、护腰垫">
+      <div class="row">
+        <select id="new-cat"></select>
+        <button class="btn primary" id="add-submit">添加</button>
+      </div>
+      <p class="hint">添加后落在所选分类末尾，同样可以勾选、删除。</p>
+    </div>
+
+    <div id="groups"></div>
+  </section>
+
+  <footer>
+    <div>清单只保存在本机浏览器，不上传、不需要注册；刷新或关闭页面后数据仍在。</div>
+    <div id="storage-warn" class="warn" hidden>当前浏览器不允许本地保存，刷新后勾选会丢失（建议用手机浏览器或 Chrome 打开）。</div>
+  </footer>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ================= 数据：分类与场景 ================= */
+  var CATS = [
+    { key: "id",    name: "证件", color: "#f0a02a" },
+    { key: "elec",  name: "电子", color: "#3b82f6" },
+    { key: "cloth", name: "衣物", color: "#8b5cf6" },
+    { key: "wash",  name: "洗漱", color: "#06b6d4" },
+    { key: "med",   name: "药品", color: "#ef4444" },
+    { key: "misc",  name: "其他", color: "#7b8797" }
+  ];
+
+  // 名称里的 {c}/{u} 会按天数换算；数组第二项 = 最少需要住够几天才出现
+  var SCENES = {
+    business: {
+      name: "出差", icon: "💼", sub: "开会 · 见客户", days: 3,
+      items: {
+        id:    ["身份证", "工牌 / 门禁卡", "名片", "酒店预订确认信息"],
+        elec:  ["手机", "手机充电器", "充电宝", "笔记本电脑", ["电脑电源线", 2], "耳机", "插头转换器"],
+        cloth: ["西装 / 衬衫 ×{c}", "西裤 / 裙装 ×{c}", "内衣裤 ×{u}", "袜子 ×{u}", "皮鞋 / 通勤鞋", ["保暖外套", 2]],
+        wash:  ["牙刷", "牙膏", "洗面奶", "剃须刀", "压缩毛巾", "护肤品分装瓶"],
+        med:   ["感冒药", "肠胃药", "创可贴", "个人长期用药"],
+        misc:  ["会议资料 / 文件袋", "签字笔", "折叠伞", "纸巾", "水杯"]
+      }
+    },
+    travel: {
+      name: "旅游", icon: "🏝️", sub: "观光 · 度假", days: 5,
+      items: {
+        id:    ["身份证", "现金 / 银行卡", "优惠证件（学生证等）"],
+        elec:  ["手机", "手机充电器", "充电宝", "耳机", ["相机 / 镜头", 2], ["存储卡", 2], ["自拍杆", 2]],
+        cloth: ["换洗衣物 ×{c}", "内衣裤 ×{u}", "袜子 ×{u}", "舒适运动鞋", "遮阳帽", "薄外套", ["泳衣", 2]],
+        wash:  ["旅行洗漱包", "牙刷", "牙膏", "防晒霜", "湿纸巾", "免洗洗头水"],
+        med:   ["肠胃药", "晕车晕船药", "创可贴", "感冒药"],
+        misc:  ["随身小背包", "水杯", "折叠伞", "纸巾", "行程单 / 门票", "路上零食"]
+      }
+    },
+    home: {
+      name: "回家", icon: "🏠", sub: "探亲 · 过节", days: 4,
+      items: {
+        id:    ["身份证", "现金 / 红包"],
+        elec:  ["手机", "手机充电器", "充电宝", "耳机", ["笔记本电脑", 2]],
+        cloth: ["换洗衣物 ×{c}", "内衣裤 ×{u}", "袜子 ×{u}", "厚外套", "居家拖鞋"],
+        wash:  ["牙刷", "毛巾", "护肤品", "防晒霜"],
+        med:   ["常用药", "肠胃药", "创可贴"],
+        misc:  ["伴手礼 / 特产", "家门钥匙", "水杯", "纸巾", "折叠伞"]
+      }
+    },
+    camping: {
+      name: "露营", icon: "⛺", sub: "户外 · 过夜", days: 2,
+      items: {
+        id:    ["身份证", "现金", "营地预约信息"],
+        elec:  ["手机", "充电宝", "营地灯 / 手电筒", "充电线", "蓝牙音箱"],
+        cloth: ["防风外套", "保暖中层", "换洗衣物 ×{c}", "内衣裤 ×{u}", "袜子 ×{u}", "徒步鞋", "遮阳帽", ["手套", 2]],
+        wash:  ["牙刷", "牙膏", "速干毛巾", "免洗洗手液", "防晒霜", "驱蚊液", "湿纸巾"],
+        med:   ["创可贴", "碘伏棉签", "止痒膏", "肠胃药", "常用药"],
+        misc:  ["帐篷", "睡袋", "防潮垫 / 野餐布", "折叠椅", "保温杯", "饮用水 / 干粮", "垃圾袋", "打火机"]
+      }
+    },
+    daytrip: {
+      name: "短途出行", icon: "🚇", sub: "当天往返 · 周边", days: 1,
+      items: {
+        id:    ["身份证", "少量现金"],
+        elec:  ["手机", "耳机", "充电宝", "充电线"],
+        cloth: ["外衣 ×{c}", "内衣裤 ×{u}", "袜子 ×{u}", "舒适步行鞋", "薄外套"],
+        wash:  ["便携牙具", "防晒霜", "湿纸巾", "纸巾"],
+        med:   ["创可贴", "常用药", "晕车药"],
+        misc:  ["小背包", "水杯", "折叠伞", "家门钥匙", "零食"]
+      }
+    }
+  };
+  var SCENE_KEYS = ["business", "travel", "home", "camping", "daytrip"];
+  var catName = {}; CATS.forEach(function (c) { catName[c.key] = c; });
+
+  /* ================= 本地存储（v2：清单 + 每场景一份个人模板） ================= */
+  var KEY = "eatwhat.travel-list.v2";
+  var LEGACY_KEY = "eatwhat.travel-list.v1";
+  var memoryOnly = false, memoryState = null;
+
+  function storageAvailable() {
+    try {
+      var t = "__t"; localStorage.setItem(t, "1"); localStorage.removeItem(t);
+      return true;
+    } catch (e) { return false; }
+  }
+  function save() {
+    var payload = JSON.stringify({ v: 2, trip: state.trip, templates: state.templates });
+    if (memoryOnly) { memoryState = payload; return; }
+    try { localStorage.setItem(KEY, payload); } catch (e) { memoryOnly = true; showStorageWarn(); }
+  }
+  function readRaw(key) {
+    if (memoryOnly) return key === KEY ? memoryState : null;
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  /* v1 只存了按当时天数解析好的显示名（如"内衣裤 ×3"）。直接当 raw 用会把数量永久冻死，
+     所以用当时的天数把该场景的模式串重算一遍，反查回带占位符的模式串。 */
+  function restoreRaw(sceneKey, days, name) {
+    var lists = SCENES[sceneKey].items;
+    for (var c = 0; c < CATS.length; c++) {
+      var arr = lists[CATS[c].key] || [];
+      for (var i = 0; i < arr.length; i++) {
+        var pattern = isArray(arr[i]) ? arr[i][0] : arr[i];
+        if (resolveRaw(pattern, false, days) === name) return pattern;
+      }
+    }
+    return null;
+  }
+  function cleanTrip(trip) {
+    if (!trip || !SCENES[trip.scene] || !isArray(trip.items)) return null;
+    if (typeof trip.days !== "number" || trip.days < 1) trip.days = 1;
+    trip.items = trip.items.filter(function (it) {
+      return it && typeof it.name === "string" && catName[it.cat];
+    });
+    trip.items.forEach(function (it) {
+      if (typeof it.raw !== "string" || !it.raw) {
+        it.raw = it.custom ? it.name : (restoreRaw(trip.scene, trip.days, it.name) || it.name);
+      }
+      it.custom = !!it.custom;
+      it.done = !!it.done;
+      if (!it.id) it.id = uid();
+    });
+    return trip;
+  }
+  function cleanTemplates(map) {
+    var out = {};
+    if (!map || typeof map !== "object") return out;
+    SCENE_KEYS.forEach(function (k) {
+      var t = map[k];
+      if (!t || !isArray(t.items) || !t.items.length) return;
+      var items = t.items.filter(function (it) {
+        return it && catName[it.cat] && typeof it.raw === "string" && it.raw;
+      });
+      if (items.length) out[k] = { items: items, savedAt: t.savedAt || 0 };
+    });
+    return out;
+  }
+  /* 返回 {trip, templates, migrated} —— migrated=从 v1 升级上来 */
+  function loadAll() {
+    var raw = readRaw(KEY);
+    if (raw) {
+      try {
+        var data = JSON.parse(raw);
+        if (data && data.v === 2) {
+          return { trip: cleanTrip(data.trip), templates: cleanTemplates(data.templates), migrated: false };
+        }
+      } catch (e) { /* 坏数据按无数据处理 */ }
+    }
+    var legacy = readRaw(LEGACY_KEY);
+    if (legacy) {
+      try {
+        var old = JSON.parse(legacy);
+        if (old && old.v === 1 && old.trip) {
+          return { trip: cleanTrip(old.trip), templates: {}, migrated: true };
+        }
+      } catch (e) { /* 忽略 */ }
+    }
+    return { trip: null, templates: {}, migrated: false };
+  }
+  function isArray(x) { return Object.prototype.toString.call(x) === "[object Array]"; }
+  function showStorageWarn() { $("#storage-warn").hidden = false; }
+
+  /* ================= 工具 ================= */
+  function $(sel) { return document.querySelector(sel); }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function uid() {
+    return "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+  /* ================= 状态 ================= */
+  var boot = loadAll();
+  var state = {
+    scene: boot.trip ? boot.trip.scene : "business",
+    days: boot.trip ? boot.trip.days : SCENES.business.days,
+    daysTouched: false,
+    trip: boot.trip,            // {scene, days, items:[{id,cat,raw,name,done,custom}]}
+    templates: boot.templates   // {sceneKey: {items:[{cat,raw,custom}], savedAt}}
+  };
+
+  /* ================= 清单生成（P0-2 + 个人模板） ================= */
+  function resolveRaw(raw, custom, days) {
+    if (custom) return raw;                                   // 自定义名称不做占位符替换
+    var sets = Math.max(1, Math.min(Math.ceil(days / 2), 10)); // 换洗衣物套数
+    var unders = Math.max(1, Math.min(days, 14));              // 内衣/袜子件数
+    return raw.replace(/\{c\}/g, sets).replace(/\{u\}/g, unders);
+  }
+  function templateOf(sceneKey) {
+    var t = state.templates[sceneKey];
+    return (t && t.items.length) ? t : null;
+  }
+  function buildItems(sceneKey, days) {
+    var out = [];
+    var tpl = templateOf(sceneKey);
+    if (tpl) {
+      // 模板只记物品：数量按本次天数重算；不再套 minDays（用户留下的就是他要的）
+      tpl.items.forEach(function (it) {
+        var custom = !!it.custom;
+        out.push({ id: uid(), cat: it.cat, raw: it.raw, custom: custom,
+                   name: resolveRaw(it.raw, custom, days), done: false });
+      });
+      return out;
+    }
+    CATS.forEach(function (c) {
+      var list = SCENES[sceneKey].items[c.key] || [];
+      list.forEach(function (raw) {
+        var pattern = isArray(raw) ? raw[0] : raw;
+        var minDays = isArray(raw) ? (raw[1] || 1) : 1;
+        if (days < minDays) return;
+        out.push({ id: uid(), cat: c.key, raw: pattern, custom: false,
+                   name: resolveRaw(pattern, false, days), done: false });
+      });
+    });
+    return out;
+  }
+
+  function makeTrip(sceneKey, days) {
+    return { scene: sceneKey, days: days, createdAt: Date.now(), items: buildItems(sceneKey, days) };
+  }
+
+  /* ================= 设置页渲染 ================= */
+  function renderSetup() {
+    var box = $("#scenes");
+    box.innerHTML = "";
+    SCENE_KEYS.forEach(function (k) {
+      var s = SCENES[k];
+      var b = el("button", "scene" + (state.scene === k ? " on" : ""));
+      b.type = "button";
+      b.appendChild(el("span", "ico", s.icon));
+      b.appendChild(el("span", "nm", s.name));
+      if (templateOf(k)) b.appendChild(el("span", "tpl", "含我的模板"));
+      b.appendChild(el("span", "sub", s.sub));
+      b.addEventListener("click", function () {
+        state.scene = k;
+        if (!state.daysTouched) state.days = SCENES[k].days;   // 只在用户没手动调过天数时套该场景典型天数
+        renderSetup();
+      });
+      box.appendChild(b);
+    });
+
+    $("#days-num").textContent = String(state.days);
+
+    var tp = templateOf(state.scene), th = $("#tpl-hint");
+    if (tp) {
+      // 只改 span，别动 th.textContent —— 那会把里面的「改用默认清单」按钮抹掉
+      $("#tpl-hint-text").textContent = "将套用你的「" + SCENES[state.scene].name +
+        "」模板 · " + tp.items.length + " 件（数量按天数重算）";
+      th.hidden = false;
+    } else {
+      th.hidden = true;
+    }
+
+    var chips = $("#day-chips");
+    chips.innerHTML = "";
+    [1, 2, 3, 5, 7].forEach(function (d) {
+      var c = el("button", "chip", d + " 天");
+      c.type = "button";
+      c.addEventListener("click", function () { state.days = d; state.daysTouched = true; renderSetup(); });
+      chips.appendChild(c);
+    });
+
+    // 已有清单时提供"继续"入口，避免刷新后看起来数据丢了
+    var r = $("#resume");
+    if (state.trip) {
+      var t = state.trip, done = countDone(t);
+      r.innerHTML = "";
+      r.appendChild(el("b", null, "继续上次的清单：" + SCENES[t.scene].name + " · " + String(t.days) + "天"));
+      var line = el("div", "hint", "共 " + t.items.length + " 件，已勾选 " + done + " 件（" + pct(done, t.items.length) + "%）");
+      r.appendChild(line);
+      var row = el("div", "row");
+      var go = el("button", "btn primary", "继续核对");
+      go.type = "button";
+      go.addEventListener("click", showList);
+      var drop = el("button", "btn ghost", "删除这份清单");
+      drop.type = "button";
+      drop.addEventListener("click", function () {
+        if (!confirm("删除这份清单？此操作不可撤销。")) return;
+        state.trip = null; save(); renderSetup(); toast("已删除清单");
+      });
+      row.appendChild(go); row.appendChild(drop);
+      r.appendChild(row);
+      r.hidden = false;
+    } else {
+      r.hidden = true;
+    }
+  }
+
+  /* ================= 清单页渲染（P0-3 勾选 / P0-4 新增 / P0-5 删除） ================= */
+  function countDone(t) {
+    var n = 0;
+    for (var i = 0; i < t.items.length; i++) if (t.items[i].done) n++;
+    return n;
+  }
+  function pct(a, b) { return b ? Math.round((a / b) * 100) : 0; }
+
+  function renderList() {
+    var t = state.trip;
+    if (!t) return;
+    $("#trip-title").textContent = SCENES[t.scene].icon + " " + SCENES[t.scene].name + " · " + String(t.days) + " 天";
+
+    var done = countDone(t), total = t.items.length, p = pct(done, total);
+    $("#trip-pct").textContent = p + "%";
+    $("#trip-bar").style.width = p + "%";
+    if (total === 0) {
+      $("#trip-count").textContent = "清单已空";
+      $("#trip-left").textContent = "点「重新设置」可再生成";
+    } else {
+      $("#trip-count").textContent = done + " / " + total + " 件已装好";
+      $("#trip-left").textContent = total - done > 0 ? ("还剩 " + (total - done) + " 件") : "全部装好";
+    }
+    $("#done-tip").hidden = !(total > 0 && done === total);
+
+    var g = $("#groups");
+    g.innerHTML = "";
+    var hasAny = false;
+    CATS.forEach(function (c) {
+      var list = t.items.filter(function (it) { return it.cat === c.key; });
+      if (!list.length) return;
+      hasAny = true;
+
+      var card = el("section", "group");
+      var head = el("div", "ghead");
+      var dot = el("span", "dot"); dot.style.background = c.color;
+      head.appendChild(dot);
+      head.appendChild(el("span", "gname", c.name));
+      var d = list.filter(function (it) { return it.done; }).length;
+      head.appendChild(el("span", "gcount", d + "/" + list.length));
+      var all = el("button", "all", d === list.length ? "全部取消" : "全部勾上");
+      all.type = "button";
+      all.addEventListener("click", function () {
+        var target = d !== list.length;
+        list.forEach(function (it) { it.done = target; });
+        save(); renderList();
+      });
+      head.appendChild(all);
+      card.appendChild(head);
+
+      list.forEach(function (it) {
+        var row = el("div", "item" + (it.done ? " on" : ""));
+        var hit = el("button", "hit");
+        hit.type = "button";
+        hit.setAttribute("aria-pressed", it.done ? "true" : "false");
+        hit.appendChild(el("span", "box"));
+        hit.appendChild(el("span", "name", it.name));
+        if (it.custom) hit.appendChild(el("span", "tag", "自定义"));
+        hit.addEventListener("click", function () {
+          it.done = !it.done; save(); renderList();
+        });
+        row.appendChild(hit);
+
+        var del = el("button", "del", "×");
+        del.type = "button";
+        del.setAttribute("aria-label", "删除 " + it.name);
+        del.addEventListener("click", function () { deleteItem(it); });
+        row.appendChild(del);
+
+        card.appendChild(row);
+      });
+      g.appendChild(card);
+    });
+    if (!hasAny) g.appendChild(el("div", "empty", "清单已空，点“重新设置”再生成一份。"));
+
+    // 新增物品的分类下拉
+    var sel = $("#new-cat");
+    if (!sel.options.length) {
+      CATS.forEach(function (c) {
+        var o = document.createElement("option");
+        o.value = c.key; o.textContent = c.name;
+        sel.appendChild(o);
+      });
+      sel.value = "misc";   // 自定义物品默认落到"其他"，而不是证件
+    }
+
+    // 模板状态行
+    var tp = templateOf(t.scene), matched = tp && templateMatchesTrip(tp, t);
+    var st = $("#tpl-state");
+    st.className = "tplstate";
+    if (!tp) {
+      st.textContent = "还没保存模板，下次生成用系统默认清单";
+    } else if (matched) {
+      st.textContent = "已套用你的「" + SCENES[t.scene].name + "」模板 · " + tp.items.length + " 件" + savedLabel(tp.savedAt);
+    } else {
+      st.className = "tplstate dirty";
+      st.textContent = (t.items.length === 0)
+        ? "⚠ 清单已空，模板里的 " + tp.items.length + " 件仍在 —— 重新生成会套用它们"
+        : "⚠ 有改动未存：模板 " + tp.items.length + " 件，当前清单 " + t.items.length + " 件" + savedLabel(tp.savedAt);
+    }
+    $("#tpl-save").textContent = tp ? "更新我的模板" : "存为我的模板";
+    $("#tpl-clear").hidden = !tp;
+  }
+
+  var undoStack = [];
+
+  function deleteItem(it) {
+    var t = state.trip;
+    var idx = t.items.indexOf(it);
+    if (idx < 0) return;
+    t.items.splice(idx, 1);
+    undoStack.push({ item: it, at: idx, trip: t });
+    save(); renderList();
+    toast("已删除「" + it.name + "」", undoStack.length > 1 ? ("撤销 " + undoStack.length + " 件") : "撤销", undoDelete);
+  }
+
+  // 连续删除时保留栈，一次撤销只回退一件（toast 5 秒内可继续点）
+  function undoDelete() {
+    var last = undoStack.pop();
+    if (!last || last.trip !== state.trip) return;   // 清单已被替换/重新生成，旧撤销作废
+    last.trip.items.splice(Math.min(last.at, last.trip.items.length), 0, last.item);
+    save(); renderList();
+    if (undoStack.length) {
+      toast("已恢复 1 件，还可撤销 " + undoStack.length + " 件", "继续撤销", undoDelete);
+    }
+  }
+
+  function addItem(name, cat) {
+    var t = state.trip;
+    name = name.trim();
+    if (name.length > 30) name = name.slice(0, 30);
+    if (!name) { toast("请先填写物品名称"); return false; }
+    if (t.items.some(function (it) { return it.cat === cat && it.name === name; })) {
+      toast("这一类里已经有「" + name + "」了");
+      return false;
+    }
+    t.items.push({ id: uid(), cat: cat, raw: name, name: name, done: false, custom: true });
+    save(); renderList();
+    toast("已添加「" + name + "」到「" + catName[cat].name + "」");
+    return true;
+  }
+
+  /* ================= 个人模板（每场景一份，下次自动套用） ================= */
+  function snapshotOf(trip) {
+    return trip.items.map(function (it) {
+      return { cat: it.cat, raw: it.raw, custom: !!it.custom };
+    });
+  }
+  function savedLabel(ts) {
+    if (!ts) return "";
+    var d = new Date(ts);
+    return "（存于 " + (d.getMonth() + 1) + "/" + d.getDate() + "）";
+  }
+  function templateMatchesTrip(tpl, trip) {
+    var a = tpl.items, b = trip.items;
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].cat !== b[i].cat || a[i].raw !== b[i].raw || !!a[i].custom !== !!b[i].custom) return false;
+    }
+    return true;
+  }
+  function saveTemplate() {
+    var t = state.trip;
+    if (!t || !t.items.length) { toast("清单是空的，没有可保存的模板"); return; }
+    var isNew = !templateOf(t.scene);
+    state.templates[t.scene] = { items: snapshotOf(t), savedAt: Date.now() };
+    save(); renderList(); renderSetup();
+    toast((isNew ? "已保存" : "已更新") + "「" + SCENES[t.scene].name + "」模板（" + t.items.length + " 件）" +
+      (memoryOnly ? " —— 当前浏览器不允许本地保存，刷新后会丢" : "，下次选该场景自动套用"));
+  }
+  function clearTemplate(scene) {
+    if (!templateOf(scene)) { toast("这个场景还没有模板"); return; }
+    if (!confirm("清除「" + SCENES[scene].name + "」的个人模板？下次生成改用系统默认清单。")) return;
+    delete state.templates[scene];
+    save(); renderList(); renderSetup();
+    toast("已清除「" + SCENES[scene].name + "」模板");
+  }
+
+  /* ================= 视图切换 ================= */
+  function showList() {
+    if (!state.trip) return;
+    $("#view-setup").hidden = true;
+    $("#view-list").hidden = false;
+    $("#addform").hidden = true;
+    renderList();
+    window.scrollTo(0, 0);
+  }
+  function showSetup() {
+    $("#view-list").hidden = true;
+    $("#view-setup").hidden = false;
+    renderSetup();
+    window.scrollTo(0, 0);
+  }
+  function generate() {
+    if (state.trip && state.trip.items.length) {
+      var done = countDone(state.trip);
+      var msg = "重新生成会覆盖当前清单" + (done ? "（已勾选 " + done + " 件）" : "") +
+        "，自定义添加的物品也会消失" +
+        (templateOf(state.scene) && !templateMatchesTrip(templateOf(state.scene), state.trip)
+          ? "；未存入模板的改动同样会丢，你删掉的默认物品会回来" : "") +
+        "。确定？";
+      if (!confirm(msg)) return;
+    }
+    state.trip = makeTrip(state.scene, state.days);
+    save();
+    showList();
+    toast("已生成 " + state.trip.items.length + " 件物品的清单");
+  }
+
+  /* ================= toast（含撤销） ================= */
+  var toastTimer = null;
+  function toast(text, actionText, action) {
+    var box = $("#toast");
+    box.innerHTML = "";
+    box.appendChild(el("span", null, text));
+    if (actionText) {
+      var b = el("button", null, actionText);
+      b.type = "button";
+      b.addEventListener("click", function () { hideToast(); action(); });
+      box.appendChild(b);
+    }
+    box.hidden = false;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, actionText ? 5000 : 2200);
+  }
+  function hideToast() {
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+    $("#toast").hidden = true;
+  }
+
+  /* ================= 事件绑定 ================= */
+  function bind() {
+    $("#minus").addEventListener("click", function () {
+      state.days = Math.max(1, state.days - 1); state.daysTouched = true; renderSetup();
+    });
+    $("#plus").addEventListener("click", function () {
+      state.days = Math.min(30, state.days + 1); state.daysTouched = true; renderSetup();
+    });
+    $("#gen").addEventListener("click", generate);
+    $("#re-setup").addEventListener("click", showSetup);
+    $("#tpl-save").addEventListener("click", saveTemplate);
+    $("#tpl-clear").addEventListener("click", function () {
+      if (state.trip) clearTemplate(state.trip.scene);
+    });
+    $("#tpl-clear-setup").addEventListener("click", function () {
+      clearTemplate(state.scene);
+    });
+
+    $("#show-add").addEventListener("click", function () {
+      var f = $("#addform");
+      f.hidden = !f.hidden;
+      if (!f.hidden) {
+        $("#new-name").focus();
+        f.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    });
+    $("#add-submit").addEventListener("click", function () {
+      var input = $("#new-name");
+      if (addItem(input.value, $("#new-cat").value)) { input.value = ""; input.focus(); }
+      else if (input.value.trim()) input.select();   // 被拒时保留原文并全选，不用重打
+    });
+    $("#new-name").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        if (addItem(this.value, $("#new-cat").value)) this.value = "";
+        else if (this.value.trim()) this.select();
+      }
+    });
+
+    $("#clear-check").addEventListener("click", function () {
+      var t = state.trip;
+      if (!t || countDone(t) === 0) { toast("当前没有已勾选的物品"); return; }
+      if (!confirm("清空所有勾选，回到“未打包”状态？")) return;
+      t.items.forEach(function (it) { it.done = false; });
+      save(); renderList(); toast("已清空勾选");
+    });
+
+    $("#drop-list").addEventListener("click", function () {
+      if (!confirm("删除这份清单？此操作不可撤销。")) return;
+      state.trip = null; save(); showSetup(); toast("已删除清单");
+    });
+  }
+
+  /* ================= 启动 ================= */
+  if (!storageAvailable()) { memoryOnly = true; showStorageWarn(); }
+  bind();
+  if (boot.migrated) { save(); toast("已把本地数据升级到新格式，原清单保留"); }
+  if (state.trip) showList(); else showSetup();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# 本地验收产物（截图 / 验证副本 / headless Edge profile），不进入公开仓库
+.verify/
+
+# 系统垃圾文件
+Thumbs.db
+Desktop.ini
+.DS_Store
