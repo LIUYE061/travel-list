@@ -31,6 +31,8 @@ BLOCK = """<meta name="theme-color" content="#2f6bed">
 <link rel="icon" type="image/png" sizes="96x96" href="./icons/icon-96.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <link rel="shortcut icon" href="./favicon.ico">
+<link rel="stylesheet" href="./webclip.css">
+<script src="./webclip.js" defer></script>
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">"""
 
 MARKER = '<meta name="theme-color" content="#2f6bed">'
@@ -44,6 +46,9 @@ GUARD_TOKENS = (
     "./icons/",
     "theme-color",
     "mobile-web-app-capable",
+    "webclip.css",
+    "webclip.js",
+    "sw.js",
     "manifest.json",
 )
 

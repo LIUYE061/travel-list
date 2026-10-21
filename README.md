@@ -8,6 +8,8 @@
 
 > 同一份页面的中文文件名入口：https://LIUYE061.github.io/travel-list/%E5%87%BA%E8%A1%8C%E6%B8%85%E5%8D%95MVP.html
 
+> 安装说明直达入口：https://LIUYE061.github.io/travel-list/?install=1
+
 手机上想"像个 App 一样"用（桌面图标 + 全屏无地址栏）？见下面[在手机上使用](#在手机上使用)。
 
 ## 这是什么
@@ -56,8 +58,8 @@
 > "正则计数 vs 朴素子串计数"的交叉校验，两者不一致就直接报错退出，防止再次静默漏报。
 
 已配 `manifest.json`（`display: standalone`、192/512/maskable 三套图标、`theme_color`）
-以及 iOS 侧的 `apple-touch-icon` + `apple-mobile-web-app-capable`，在支持的浏览器上会自动出现安装入口。
-按你的选择**没有引入 service worker**，所以不做离线缓存 —— 代价是改版后刷新即生效，不会有旧缓存赖着不走。
+以及 iOS 侧的 `apple-touch-icon` + `apple-mobile-web-app-capable`。页面顶部有“安装”入口，会自动区分 iOS、Android 和微信内置浏览器；支持原生安装的浏览器会直接显示“一键安装”。
+`sw.js` 提供应用外壳离线缓存：首次联网打开后，断网或 GitHub Pages 暂时不可达时仍可从主屏启动。页面导航采用网络优先策略，在线时不牺牲更新及时性。
 
 > **iOS 的关键差异**：从主屏幕图标启动的网页 App 与 Safari 标签页是**两个独立存储容器**。
 > 在 Safari 里勾到一半的清单，点主屏幕图标进去是空的（反之亦然）。首次使用请固定选一种入口。
@@ -132,14 +134,18 @@ start /b python -m http.server 8000 --bind 0.0.0.0
 | 文件 | 说明 |
 |------|------|
 | `出行清单MVP.html` | **交付物源文件**，单文件零依赖，双击即可打开；不含任何 PWA 引用 |
-| `index.html` | **部署入口，由脚本生成**（= 源文件 + PWA 头部注入），不要手改 |
+| `index.html` | **部署入口，由脚本生成**（= 源文件 + PWA 头部、安装层样式与脚本），不要手改 |
+| `webclip.css` `webclip.js` | 部署层：注入“安装”按钮、分平台安装引导和原生安装事件，源文件本身不引用 |
+| `sw.js` | Service Worker：缓存页面、安装层、Manifest 与图标，提供离线打开 |
 | `build_index.py` | 生成 `index.html`；改完源文件跑一次 |
-| `manifest.json` | PWA 清单：`display: standalone` + 图标 + 主题色。路径全用相对 `./`，Pages 子路径与局域网根路径都能解析 |
+| `manifest.json` | PWA 清单：独立窗口、启动地址、主题色与多尺寸图标 |
 | `icons/` | 生成的 PNG 图标：`icon-192` `icon-512` `maskable-512` `apple-touch-icon` `favicon-32` |
 | `make_icons.py` | 重新生成图标（渐变底 + 行李箱，纯几何绘制，不依赖 emoji 字体） |
 | `出行清单.md` | 需求与功能优先级（P0 / P1）定义 |
 | `减法思维-出行清单.md` | 功能取舍过程，含"不做清单" |
 | `灵魂三问--学生.md` `灵魂三问-上班族.md` | 两类目标用户的灵魂三问分析 |
+| `逆向思维-出行清单.md` | Pre-mortem 失败预演与风险预防 |
+| `验证方案-出行清单.md` | 12 位目标用户的验证执行与结果分析方案 |
 | `MVP使用说明.md` | 运行方式、数据结构、localStorage key、功能边界与决策记录 |
 
 改完 `出行清单MVP.html` 后，重新生成部署入口：
@@ -154,9 +160,9 @@ python build_index.py
 ## 技术要点
 
 - 纯 HTML + CSS + 原生 JS。**源文件** `出行清单MVP.html` 单文件、零外部请求，双击即用；
-  只有部署入口 `index.html` 会多引用 `manifest.json` 与 `icons/`（共 5 个 PNG），
+  只有部署入口 `index.html` 会多引用 `manifest.json`、`webclip.css/js`、`sw.js` 与多尺寸图标，
   页面逻辑本身仍然没有任何构建步骤与第三方依赖
-- 无 service worker：不做离线缓存，因此改版后刷新即生效，不会出现"装了旧版本赖着不走"
+- `sw.js` 采用网络优先的页面导航与缓存优先的静态资源策略；修改部署层或图标后需要提升 `CACHE_NAME`，避免旧缓存保留
 - localStorage key：`eatwhat.travel-list.v2`；首次打开会自动从旧的 `v1` 迁移一次并提示
 - 物品名支持 `{c}` / `{u}` 占位符（如 `内衣裤 ×{u}`），生成时按本次天数解析 —— 这是"模板只记物品、数量随天数重算"的实现基础
 - 自定义物品按字面文本渲染，不做占位符替换；所有用户输入走文本节点，不拼接进 HTML
