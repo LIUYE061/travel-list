@@ -28,6 +28,9 @@ BLOCK = """<meta name="theme-color" content="#2f6bed">
 <meta name="apple-mobile-web-app-title" content="出行清单">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="./icons/icon-96.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="shortcut icon" href="./favicon.ico">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">"""
 
 MARKER = '<meta name="theme-color" content="#2f6bed">'

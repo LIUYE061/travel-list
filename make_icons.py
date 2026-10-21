@@ -86,6 +86,8 @@ def make(size, *, full_bleed=False, glyph=0.62, radius=0.225):
 
 
 targets = [
+    ("icon-48.png", make(48, glyph=0.64)),
+    ("icon-96.png", make(96, glyph=0.63)),
     ("icon-192.png", make(192)),
     ("icon-512.png", make(512)),
     ("maskable-512.png", make(512, full_bleed=True, glyph=0.50)),
@@ -96,3 +98,10 @@ targets = [
 for name, img in targets:
     img.save(os.path.join(OUT, name), "PNG")
     print("%-22s %sx%s  mode=%s" % (name, img.size[0], img.size[1], img.mode))
+
+# 桌面快捷方式在不少浏览器里取 favicon 而非 manifest 图标，32px 放到启动器上会糊。
+# 额外写一个多尺寸 favicon.ico 放在仓库根，兜住"浏览器直接请求 /favicon.ico"这条路径。
+ico_src = make(48, glyph=0.64)
+ico_path = os.path.join(ROOT, "favicon.ico")
+ico_src.save(ico_path, format="ICO", sizes=[(16, 16), (24, 24), (32, 32), (48, 48)])
+print("%-22s -> %s bytes" % ("favicon.ico", os.path.getsize(ico_path)))
