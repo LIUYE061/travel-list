@@ -48,6 +48,16 @@ python -m http.server 8000 --bind 0.0.0.0
 手机浏览器打开 `http://<本机局域网IP>:8000/`（IP 看 `ipconfig` 里 **WLAN** 那条，
 别用 192.168.56.1 / 176.1 / 211.1 这类 VirtualBox、VMware 仅主机网卡地址）。
 
+在 cmd 里想边开服务边留着终端用 `start /b`，**别再叠 `timeout` 或 `<nul`** ——
+`http.server` 的 stdin 一旦被重定向会立刻打出
+`ERROR: Input redirection is not supported` 然后自杀：
+
+```bat
+start /b python -m http.server 8000 --bind 0.0.0.0
+```
+
+要停服务用 `taskkill /PID <pid> /F`，PID 从 `netstat -ano | findstr :8000` 拿。
+
 两个现实限制：
 
 - 这是 `http://` 非安全上下文，**Android Chrome 不会弹"安装应用"提示**（iOS 仍可添加到主屏幕）。
