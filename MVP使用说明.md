@@ -9,6 +9,11 @@
 | 本机试用 | 双击 `出行清单MVP.html`，用 Edge / Chrome 打开 |
 | 发给试用用户 | 直接把文件发过去（微信/邮件），对方双击打开；或丢到任意静态托管（GitHub Pages、Netlify、OSS）后用链接访问 |
 | 手机试用 | 建议用静态托管链接访问（`file://` 在部分手机浏览器上无法本地存储） |
+| 手机"像 App 一样" | 用 HTTPS 地址打开后**添加到主屏幕**（iOS 分享菜单 / Android ⋮ 菜单），得到独立图标 + 全屏无地址栏。PWA 头部只注入在部署入口 `index.html` 里（`python build_index.py` 生成），交付源文件仍是单文件 |
+| 本机局域网真机验证 | `python -m http.server 8000 --bind 0.0.0.0`，手机连同 WiFi 打开 `http://<WLAN 网卡 IP>:8000/`。适合 `github.io` 被网络重置时自救；但 `http://` 非安全上下文，Android 不会弹安装提示，公司/校园网的 AP 隔离也会直接连不通 |
+
+> iOS 特别注意：从主屏幕图标启动的网页 App 与 Safari 标签页是**两个独立存储容器**，
+> 清单和模板不互通。三种入口（`file://`、Pages HTTPS、局域网 http）同样各存一份。
 
 > 用 `http(s)://` 访问比 `file://` 更可靠：`file://` 下个别浏览器（Safari、部分国产浏览器内核）会禁用 localStorage，页面底部会自动出现红字提示"当前浏览器不允许本地保存"。
 
