@@ -10,6 +10,9 @@ import os
 import sys
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="backslashreplace")
+# 护栏的报错信息走 stderr；不包这层，重定向或 CI 捕获时中文会按 GBK 输出成乱码，
+# 而"报错中止"能给人看的只有这句话。
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="backslashreplace")
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "出行清单MVP.html")
@@ -29,12 +32,26 @@ BLOCK = """<meta name="theme-color" content="#2f6bed">
 
 MARKER = '<meta name="theme-color" content="#2f6bed">'
 
+# 护栏要覆盖所有会破坏"单文件零依赖"的痕迹，不能只认 theme-color 一个串：
+# 否则源文件被塞进 <link rel="manifest"> 时会被静默放过，产出双 manifest 页。
+GUARD_TOKENS = (
+    "<link",
+    'rel="manifest"',
+    "apple-touch-icon",
+    "./icons/",
+    "theme-color",
+    "mobile-web-app-capable",
+    "manifest.json",
+)
+
 
 def build():
     html = open(SRC, encoding="utf-8").read()
 
-    if MARKER in html:
-        raise SystemExit("SRC 已被注入过，中止：源文件必须保持单文件零依赖")
+    leaked = [t for t in GUARD_TOKENS if t in html]
+    if leaked:
+        raise SystemExit("SRC 含部署层专用标记，中止（源文件必须保持单文件零依赖）："
+                         + " / ".join(leaked))
     if html.count(ANCHOR) != 1:
         raise SystemExit("找不到唯一 viewport 锚点，源文件结构已变，需人工确认注入位置")
 

@@ -3,9 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light only">
 <title>出行清单 · 打包不遗漏</title>
 <style>
   :root{
+    /* 纯亮色配色，无暗色变体：显式拒绝浏览器算法式深色改写 */
+    color-scheme:light only;
     --bg:#f4f6fb; --card:#fff; --ink:#141a2b; --muted:#5b6473; --line:#e6e9f2;
     --primary:#2f6bed; --primary-soft:#eef3ff; --primary-dark:#1f4cc0;
     --ok:#12a06a; --danger:#c5352f; --danger-soft:#fdeeee;

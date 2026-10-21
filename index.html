@@ -11,9 +11,12 @@
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="color-scheme" content="light only">
 <title>出行清单 · 打包不遗漏</title>
 <style>
   :root{
+    /* 纯亮色配色，无暗色变体：显式拒绝浏览器算法式深色改写 */
+    color-scheme:light only;
     --bg:#f4f6fb; --card:#fff; --ink:#141a2b; --muted:#5b6473; --line:#e6e9f2;
     --primary:#2f6bed; --primary-soft:#eef3ff; --primary-dark:#1f4cc0;
     --ok:#12a06a; --danger:#c5352f; --danger-soft:#fdeeee;
