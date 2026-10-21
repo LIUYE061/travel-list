@@ -97,6 +97,8 @@ body.standalone .install-btn{display:none}
 }
 .install-note.warn{background:var(--danger-soft);color:#8f2924}
 .install-action{width:100%;margin-top:16px;padding:13px;border-radius:11px}
+.install-action:disabled{opacity:.72;cursor:wait}
+.install-btn:focus-visible,.install-close:focus-visible,.install-action:focus-visible{outline:3px solid rgba(47,107,237,.42);outline-offset:2px}
 
 @media (max-width:360px){
   .hero{padding-left:16px;padding-right:16px}
