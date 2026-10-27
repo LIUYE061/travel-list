@@ -26,13 +26,17 @@
 
   /* ---------- header ---------- */
   .hero{
-    background:linear-gradient(135deg,#2f6bed 0%,#6a55e6 100%);
-    color:#fff;padding:22px 20px 26px;border-radius:0 0 22px 22px;margin:0 -16px 18px;
+    background:linear-gradient(128deg,#2f6bed 0%,#5d59e7 100%);
+    color:#fff;padding:20px 20px 22px;border-radius:0 0 20px 20px;margin:0 -16px 18px;
+    box-shadow:0 12px 28px rgba(47,107,237,.18);
   }
   .hero-in{max-width:724px;margin:0 auto;display:flex;align-items:center;gap:14px}
-  .hero .logo{font-size:30px;line-height:1}
-  .hero h1{margin:0;font-size:21px;letter-spacing:.5px}
-  .hero p{margin:3px 0 0;font-size:13px;opacity:.85}
+  .hero .logo{
+    width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.16);
+    display:flex;align-items:center;justify-content:center;font-size:28px;line-height:1;flex:0 0 auto;
+  }
+  .hero h1{margin:0;font-size:22px;letter-spacing:.3px}
+  .hero p{margin:3px 0 0;font-size:13px;opacity:.9}
   @media (min-width:792px){
     .hero{margin:0 0 18px;border-radius:20px;padding:22px 24px}
   }
@@ -223,6 +227,63 @@
   }
   .toast button{background:none;border:none;color:#8fc2ff;font-size:14px;font-weight:700;cursor:pointer;padding:0}
   [hidden]{display:none !important}
+
+  /* ---------- desktop workspace ---------- */
+  @media (min-width:920px){
+    .wrap{
+      width:min(1680px,calc(100vw - 48px));max-width:none;min-height:100vh;
+      display:flex;flex-direction:column;padding:0 0 calc(20px + env(safe-area-inset-bottom));
+    }
+    .hero{margin:12px 0 18px;padding:20px 26px;border-radius:20px}
+    .hero-in{max-width:none}
+    .hero .logo{width:48px;height:48px;font-size:29px}
+    .hero h1{font-size:23px}
+    .hero p{font-size:13.5px}
+
+    #view-setup{flex:1;display:flex;flex-direction:column;min-height:0}
+    #view-setup>#resume{margin-bottom:16px}
+    .setup-grid{
+      flex:1;display:grid;grid-template-columns:minmax(0,1.42fr) minmax(360px,.78fr);
+      grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch;min-height:0;
+    }
+    .setup-scenes{grid-column:1;grid-row:1 / span 2;display:flex;flex-direction:column;min-height:0}
+    .setup-days{grid-column:2;grid-row:1}
+    .setup-team{grid-column:2;grid-row:2}
+    .setup-grid>.card{margin-bottom:0}
+    .setup-scenes .scenes{
+      flex:1;grid-template-columns:repeat(6,minmax(0,1fr));
+      grid-auto-rows:minmax(125px,1fr);align-content:stretch;
+    }
+    .setup-scenes .scene{
+      grid-column:span 2;min-height:0;padding:18px 38px 18px 18px;
+      display:flex;flex-direction:column;justify-content:center;
+    }
+    .setup-scenes .scene:nth-child(4),.setup-scenes .scene:nth-child(5){grid-column:span 3}
+    .setup-scenes .scene .ico{font-size:31px}
+    .setup-scenes .scene .nm{font-size:18px;margin-top:10px}
+    .setup-scenes .scene .sub{font-size:13px;margin-top:4px}
+    .setup-days,.setup-team{min-height:100%}
+    .setup-days{display:flex;flex-direction:column}
+    .setup-days #gen{margin-top:auto}
+
+    #view-list{
+      display:grid;grid-template-columns:minmax(300px,340px) minmax(0,1fr);
+      gap:16px;align-items:start;
+    }
+    #view-list>#team-banner{grid-column:1 / -1;grid-row:1;margin-bottom:0}
+    #view-list>.list-sidebar{
+      grid-column:1;grid-row:2;position:sticky;top:16px;
+      display:flex;flex-direction:column;gap:14px;min-width:0;
+    }
+    #view-list>.list-sidebar>*{margin-bottom:0}
+    #view-list>.list-sidebar .prog{position:static}
+    #view-list>#groups{grid-column:2;grid-row:2;min-width:0}
+    #view-list>.list-sidebar .acts{grid-template-columns:repeat(2,minmax(0,1fr))}
+    #view-list>.list-sidebar .tplacts{width:100%}
+    #view-list>#groups .group:last-child{margin-bottom:0}
+    .prog .trip{min-width:0;overflow-wrap:anywhere}
+    footer{margin-top:auto}
+  }
 </style>
 </head>
 <body>
@@ -241,43 +302,45 @@
   <section id="view-setup">
     <div id="resume" class="resume" hidden></div>
 
-    <div class="card">
-      <h2 class="label"><span class="step">1</span>这次出行去做什么</h2>
-      <div id="scenes" class="scenes"></div>
-    </div>
+    <div class="setup-grid">
+      <div class="card setup-scenes">
+        <h2 class="label"><span class="step">1</span>这次出行去做什么</h2>
+        <div id="scenes" class="scenes"></div>
+      </div>
 
-    <div class="card">
-      <h2 class="label"><span class="step">2</span>去几天</h2>
-      <div class="stepper">
-        <button class="round" id="minus" aria-label="减少一天">−</button>
-        <div class="num"><span id="days-num">3</span></div>
-        <button class="round" id="plus" aria-label="增加一天">＋</button>
-        <span class="unit">天</span>
-      </div>
-      <div class="chips" id="day-chips"></div>
-      <p class="hint">天数会影响衣物、洗漱用品的建议数量。</p>
-      <div class="tplhint" id="tpl-hint" hidden>
-        <span id="tpl-hint-text"></span>
-        <button class="btn mini" id="tpl-clear-setup">改用默认清单</button>
-      </div>
-      <button class="btn primary big" id="gen">生成打包清单</button>
-    </div>
-
-    <div class="card team-entry">
-      <h2 class="label"><span class="step">3</span>一起准备</h2>
-      <p class="hint" id="team-entry-hint">创建共享清单，或用朋友发来的 6 位分享码加入，大家都能实时勾选和增删物品。</p>
-      <div class="row" id="team-entry-actions">
-        <button class="btn primary" id="team-create">创建共享清单</button>
-        <button class="btn" id="team-join">输入分享码</button>
-      </div>
-      <div class="team-current" id="team-current" hidden>
-        <div class="team-current-head">
-          <span>正在共享 <b id="team-current-name">出行清单</b></span>
-          <span class="code" id="team-current-code">—</span>
+      <div class="card setup-days">
+        <h2 class="label"><span class="step">2</span>去几天</h2>
+        <div class="stepper">
+          <button class="round" id="minus" aria-label="减少一天">−</button>
+          <div class="num"><span id="days-num">3</span></div>
+          <button class="round" id="plus" aria-label="增加一天">＋</button>
+          <span class="unit">天</span>
         </div>
-        <div class="row">
-          <button class="btn primary" id="team-open">打开共享清单</button>
-          <button class="btn" id="team-copy">复制分享码</button>
+        <div class="chips" id="day-chips"></div>
+        <p class="hint">天数会影响衣物、洗漱用品的建议数量。</p>
+        <div class="tplhint" id="tpl-hint" hidden>
+          <span id="tpl-hint-text"></span>
+          <button class="btn mini" id="tpl-clear-setup">改用默认清单</button>
+        </div>
+        <button class="btn primary big" id="gen">生成打包清单</button>
+      </div>
+
+      <div class="card team-entry setup-team">
+        <h2 class="label"><span class="step">3</span>一起准备</h2>
+        <p class="hint" id="team-entry-hint">创建共享清单，或用朋友发来的 6 位分享码加入，大家都能实时勾选和增删物品。</p>
+        <div class="row" id="team-entry-actions">
+          <button class="btn primary" id="team-create">创建共享清单</button>
+          <button class="btn" id="team-join">输入分享码</button>
+        </div>
+        <div class="team-current" id="team-current" hidden>
+          <div class="team-current-head">
+            <span>正在共享 <b id="team-current-name">出行清单</b></span>
+            <span class="code" id="team-current-code">—</span>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="team-open">打开共享清单</button>
+            <button class="btn" id="team-copy">复制分享码</button>
+          </div>
         </div>
       </div>
     </div>
@@ -295,44 +358,46 @@
       </div>
       <div class="members" id="team-members"></div>
     </div>
-    <div class="prog">
-      <div class="top">
-        <span class="trip" id="trip-title">—</span>
-        <span class="pct" id="trip-pct">0%</span>
+    <div class="list-sidebar">
+      <div class="prog">
+        <div class="top">
+          <span class="trip" id="trip-title">—</span>
+          <span class="pct" id="trip-pct">0%</span>
+        </div>
+        <div class="bar"><i id="trip-bar"></i></div>
+        <div class="meta">
+          <span id="trip-count">0 / 0 件已装好</span>
+          <span id="trip-left">还剩 0 件</span>
+        </div>
       </div>
-      <div class="bar"><i id="trip-bar"></i></div>
-      <div class="meta">
-        <span id="trip-count">0 / 0 件已装好</span>
-        <span id="trip-left">还剩 0 件</span>
-      </div>
-    </div>
 
-    <div class="card tools">
-      <div class="acts">
-        <button class="btn key" id="show-add">＋ 新增物品</button>
-        <button class="btn" id="clear-check">清空勾选</button>
-        <button class="btn" id="re-setup">重新设置</button>
-        <button class="btn danger" id="drop-list">删除清单</button>
-        <button class="btn danger" id="leave-team" hidden>退出共享</button>
+      <div class="card tools">
+        <div class="acts">
+          <button class="btn key" id="show-add">＋ 新增物品</button>
+          <button class="btn" id="clear-check">清空勾选</button>
+          <button class="btn" id="re-setup">重新设置</button>
+          <button class="btn danger" id="drop-list">删除清单</button>
+          <button class="btn danger" id="leave-team" hidden>退出共享</button>
+        </div>
+        <div class="done-tip" id="done-tip" hidden>全部装好了 ✈️ 出发前请再对照一次证件和手机。</div>
+        <div class="tplrow">
+          <span class="tplstate" id="tpl-state"></span>
+          <span class="tplacts">
+            <button class="btn" id="tpl-save">存为我的模板</button>
+            <button class="btn danger" id="tpl-clear" hidden>清除模板</button>
+          </span>
+        </div>
       </div>
-      <div class="done-tip" id="done-tip" hidden>全部装好了 ✈️ 出发前请再对照一次证件和手机。</div>
-      <div class="tplrow">
-        <span class="tplstate" id="tpl-state"></span>
-        <span class="tplacts">
-          <button class="btn" id="tpl-save">存为我的模板</button>
-          <button class="btn danger" id="tpl-clear" hidden>清除模板</button>
-        </span>
-      </div>
-    </div>
 
-    <div class="card addcard" id="addform" hidden>
-      <h2 class="label">＋ 新增一件要带的物品</h2>
-      <input id="new-name" type="text" maxlength="30" placeholder="名称，如：常备药、充电线、护腰垫">
-      <div class="row">
-        <select id="new-cat"></select>
-        <button class="btn primary" id="add-submit">添加</button>
+      <div class="card addcard" id="addform" hidden>
+        <h2 class="label">＋ 新增一件要带的物品</h2>
+        <input id="new-name" type="text" maxlength="30" placeholder="名称，如：常备药、充电线、护腰垫">
+        <div class="row">
+          <select id="new-cat"></select>
+          <button class="btn primary" id="add-submit">添加</button>
+        </div>
+        <p class="hint">添加后落在所选分类末尾，同样可以勾选、删除。</p>
       </div>
-      <p class="hint">添加后落在所选分类末尾，同样可以勾选、删除。</p>
     </div>
 
     <div id="groups"></div>
@@ -549,7 +614,10 @@
     try { return decodeURIComponent(match[1].replace(/\+/g, " ")); } catch (e) { return ""; }
   }
   function configuredApiBase() {
-    var base = queryValue("api") || window.TEAM_API_BASE || "";
+    var apiMeta = document.querySelector('meta[name="travel-api-base"]');
+    var base = queryValue("api") ||
+      (apiMeta && apiMeta.getAttribute("content")) ||
+      window.TEAM_API_BASE || "";
     return String(base).replace(/\/+$/, "");
   }
   function loadTeamSession() {
@@ -596,6 +664,7 @@
       room_not_found: "分享码不存在，请核对后重试",
       room_full: "这个共享清单已经有 10 位成员",
       need_nickname: "请填写你的称呼",
+      nickname_taken: "这个称呼已被队友使用，请换一个",
       need_item_name: "物品名称不能为空",
       not_member: "当前身份已失效，请重新加入",
       stale: "队友刚刚更新了清单，已为你刷新，请再试一次",
@@ -1315,15 +1384,47 @@
   }
   function leaveTeam() {
     if (!team) return;
-    if (!confirm("退出共享清单？本机会保留当前清单副本，但之后不再同步队友的修改。")) return;
-    team = null;
-    clearTeamSession();
-    stopTeamSync();
-    undoStack = [];
-    renderTeam();
-    save();
-    showSetup();
-    toast("已退出共享，当前清单已保留在本机");
+    if (!confirm("退出共享清单？成员列表会立即移除你，本机会保留当前清单副本。")) return;
+    var session = team;
+    var button = $("#leave-team");
+    button.disabled = true;
+    button.textContent = "正在退出…";
+    teamApi("/api/leave", {
+      method: "POST",
+      body: {
+        code: team.code,
+        memberId: team.memberId,
+        memberToken: team.memberToken
+      }
+    }).then(function () {
+      if (team !== session) return;
+      team = null;
+      clearTeamSession();
+      stopTeamSync();
+      undoStack = [];
+      button.disabled = false;
+      button.textContent = "退出共享";
+      renderTeam();
+      save();
+      showSetup();
+      toast("已退出共享，成员列表已同步更新");
+    }).catch(function (error) {
+      if (team !== session) return;
+      button.disabled = false;
+      button.textContent = "退出共享";
+      if (error.code === "not_member" || error.code === "room_not_found") {
+        team = null;
+        clearTeamSession();
+        stopTeamSync();
+        undoStack = [];
+        renderTeam();
+        save();
+        showSetup();
+        toast("已清理失效的共享状态");
+        return;
+      }
+      toast(error.message);
+    });
   }
 
   /* ================= 视图切换 ================= */

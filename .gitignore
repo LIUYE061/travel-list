@@ -7,6 +7,11 @@
 # 临时公网隧道二进制与日志，不进入仓库
 .tools/
 
+# 云函数依赖在部署时安装
+cloudfunctions/**/node_modules/
+cloudfunctions/**/public/
+.cloudbase-dist/
+
 # 系统垃圾文件
 Thumbs.db
 Desktop.ini

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
+  "envId": "travel-list-d9g3289de60822f1b",
+  "functionRoot": "cloudfunctions",
+  "functions": [
+    {
+      "name": "travel-api",
+      "timeout": 20,
+      "memorySize": 256,
+      "runtime": "Nodejs20.19",
+      "handler": "index.main",
+      "description": "Travel List shared room API"
+    }
+  ]
+}

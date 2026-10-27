@@ -48,12 +48,30 @@ function normalizeDays(days) {
 }
 function normalizeRoom(room) {
   if (!room || typeof room !== "object") return null;
+  var needsSave = false;
   room.scene = SCENE_KEYS[room.scene] ? room.scene : "business";
   room.days = normalizeDays(room.days);
   if (!Array.isArray(room.members)) room.members = [];
   if (!Array.isArray(room.items)) room.items = [];
+  var seenNicknames = {};
   room.members.forEach(function (member) {
-    if (!member.token) member.token = crypto.randomBytes(24).toString("hex");
+    if (!member.token) {
+      member.token = crypto.randomBytes(24).toString("hex");
+      needsSave = true;
+    }
+    var base = String(member.nickname || "队友").trim().slice(0, 16) || "队友";
+    var candidate = base;
+    var suffix = 2;
+    while (seenNicknames[nicknameKey(candidate)]) {
+      var tail = " " + suffix;
+      candidate = base.slice(0, Math.max(1, 16 - tail.length)) + tail;
+      suffix += 1;
+    }
+    if (candidate !== member.nickname) {
+      member.nickname = candidate;
+      needsSave = true;
+    }
+    seenNicknames[nicknameKey(candidate)] = true;
   });
   room.items.forEach(function (item) {
     item.cat = normalizeCat(item.cat);
@@ -61,11 +79,19 @@ function normalizeRoom(room) {
     item.done = !!item.done;
     item.qty = Math.max(1, Math.min(99, Number(item.qty) || 1));
   });
+  room._needsSave = needsSave;
   return room;
 }
 function loadRoom(code) {
   try {
-    return normalizeRoom(JSON.parse(fs.readFileSync(roomPath(code), "utf8")));
+    var room = normalizeRoom(JSON.parse(fs.readFileSync(roomPath(code), "utf8")));
+    if (room && room._needsSave) {
+      delete room._needsSave;
+      saveRoom(room);
+    } else if (room) {
+      delete room._needsSave;
+    }
+    return room;
   } catch (e) {
     return null;
   }
@@ -120,6 +146,15 @@ function findMember(room, memberId, token) {
     }
   }
   return null;
+}
+function nicknameKey(nickname) {
+  return String(nickname || "").trim().normalize("NFKC").toLowerCase();
+}
+function nicknameTaken(room, nickname) {
+  var key = nicknameKey(nickname);
+  return room.members.some(function (member) {
+    return nicknameKey(member.nickname) === key;
+  });
 }
 function findItem(room, itemId) {
   for (var i = 0; i < room.items.length; i++) {
@@ -321,12 +356,32 @@ const server = http.createServer(function (req, res) {
           if (!room) return send(res, 404, { ok: false, error: "room_not_found" });
           var nickname = String(b.nickname || "").trim().slice(0, 16);
           if (!nickname) return send(res, 400, { ok: false, error: "need_nickname" });
+          if (nicknameTaken(room, nickname)) {
+            return send(res, 409, { ok: false, error: "nickname_taken" });
+          }
           if (room.members.length >= 10) return send(res, 409, { ok: false, error: "room_full" });
           var mid = id("m");
           var token = crypto.randomBytes(24).toString("hex");
           room.members.push({ id: mid, token: token, nickname: nickname, joinedAt: Date.now(), isCreator: false });
           bump(room);
           return send(res, 200, { ok: true, memberId: mid, memberToken: token, room: publicView(room) });
+        });
+      }
+
+      if (route === "POST /api/leave") {
+        return readBody(req).then(function (b) {
+          var room4 = loadRoom(String(b.code || "").toUpperCase());
+          if (!room4) return send(res, 404, { ok: false, error: "room_not_found" });
+          var member = findMember(room4, String(b.memberId || ""), b.memberToken);
+          if (!member) return send(res, 403, { ok: false, error: "not_member" });
+          room4.members = room4.members.filter(function (item) {
+            return item.id !== member.id;
+          });
+          room4.items.forEach(function (item) {
+            if (item.owner === member.id) item.owner = null;
+          });
+          bump(room4);
+          return send(res, 200, { ok: true, version: room4.version, room: publicView(room4) });
         });
       }
 

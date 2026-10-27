@@ -5,6 +5,7 @@
 和局域网服务的根路径下都能解析到正确位置。
 """
 import hashlib
+import html as html_lib
 import io
 import os
 import sys
@@ -36,6 +37,7 @@ BLOCK = """<meta name="theme-color" content="#2f6bed">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">"""
 
 MARKER = '<meta name="theme-color" content="#2f6bed">'
+API_BASE = os.environ.get("TRAVEL_API_BASE", "").strip().rstrip("/")
 
 # 护栏要覆盖所有会破坏"单文件零依赖"的痕迹，不能只认 theme-color 一个串：
 # 否则源文件被塞进 <link rel="manifest"> 时会被静默放过，产出双 manifest 页。
@@ -63,7 +65,10 @@ def build():
     if html.count(ANCHOR) != 1:
         raise SystemExit("找不到唯一 viewport 锚点，源文件结构已变，需人工确认注入位置")
 
-    out = html.replace(ANCHOR, ANCHOR + "\n" + BLOCK)
+    block = BLOCK
+    if API_BASE:
+        block += '\n<meta name="travel-api-base" content="%s">' % html_lib.escape(API_BASE, quote=True)
+    out = html.replace(ANCHOR, ANCHOR + "\n" + block)
     with open(DST, "wb") as f:
         f.write(out.encode("utf-8"))
     return html, out

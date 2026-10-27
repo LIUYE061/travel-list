@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "travel-list-shell-v4";
+const CACHE_NAME = "travel-list-shell-v8";
 const APP_SHELL = [
   "./",
   "./index.html",
