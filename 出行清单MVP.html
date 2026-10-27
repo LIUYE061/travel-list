@@ -119,9 +119,57 @@
   .tplstate.dirty{color:var(--danger);font-weight:600}
   .tplacts{display:flex;gap:8px;flex:1 1 auto}
   .tplacts .btn{flex:1 1 0;padding:9px 8px;font-size:13px}
+  .btn:disabled{cursor:not-allowed;opacity:.55}
   @media (max-width:520px){
     .acts{grid-template-columns:repeat(2,minmax(0,1fr))}
   }
+
+  /* ---------- shared list ---------- */
+  .team-entry .row{margin-top:10px}
+  .team-entry .row .btn{flex:1 1 150px}
+  .team-current{background:var(--primary-soft);border:1px solid #d8e3ff;border-radius:12px;padding:12px;margin-top:10px}
+  .team-current-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .team-current-head b{font-size:15px}
+  .team-current .code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:20px;font-weight:800;letter-spacing:2px;color:var(--primary-dark)}
+  .team-current .row{margin-top:9px}
+  .sharing{
+    background:#edf8f3;border:1px solid #b9dfce;border-radius:14px;padding:12px 14px;margin-bottom:14px;
+  }
+  .share-line{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .share-line b{font-size:14px}
+  .share-code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:17px;font-weight:800;letter-spacing:2px;color:#086f4b}
+  .sync-dot{width:8px;height:8px;border-radius:50%;background:#12a06a;flex:0 0 auto}
+  .sync-dot.syncing{background:#f0a02a}
+  .sync-dot.offline{background:#c5352f}
+  .sync-label{font-size:12px;color:#3d6f5b}
+  .copy-code{margin-left:auto;background:#fff;border-color:#b9dfce;color:#086f4b;padding:6px 10px;font-size:12.5px}
+  .members{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .member{font-size:11.5px;background:#fff;border:1px solid #cbe5d9;border-radius:6px;padding:2px 7px;color:#365d4c}
+  .member.me{border-color:#88c7ac;background:#e0f5eb;font-weight:700}
+  .owner-tag{
+    border:1px solid #c9d9ff;background:var(--primary-soft);color:var(--primary-dark);border-radius:6px;
+    padding:2px 7px;font-size:11px;flex:0 0 auto;max-width:105px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  button.owner-tag{cursor:pointer}
+  button.owner-tag:hover{border-color:#8fadee;background:#e2ebff}
+  .owner-tag.mine{background:#e0f5eb;border-color:#a8d9c3;color:#086f4b}
+  .share-dialog{
+    width:min(440px,calc(100vw - 32px));border:0;border-radius:16px;padding:0;color:var(--ink);
+    box-shadow:0 24px 70px rgba(20,26,43,.3);
+  }
+  .share-dialog::backdrop{background:rgba(20,26,43,.48)}
+  .dialog-body{padding:20px}
+  .dialog-body h2{margin:0;font-size:19px}
+  .dialog-body .hint{margin-top:5px}
+  .field{display:block;margin-top:14px;font-size:13px;font-weight:700}
+  .field input{
+    display:block;width:100%;margin-top:6px;border:1.5px solid #d7e0f5;border-radius:10px;
+    padding:10px 12px;background:#fff;font-weight:400;
+  }
+  .field input:focus{outline:none;border-color:var(--primary)}
+  #share-code-input{text-transform:uppercase;letter-spacing:3px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+  .form-error{min-height:18px;margin:9px 0 0;color:var(--danger);font-size:12.5px}
+  .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
 
   /* ---------- groups & items ---------- */
   .group{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:6px 16px 12px;margin-bottom:14px}
@@ -214,10 +262,39 @@
       </div>
       <button class="btn primary big" id="gen">生成打包清单</button>
     </div>
+
+    <div class="card team-entry">
+      <h2 class="label"><span class="step">3</span>一起准备</h2>
+      <p class="hint" id="team-entry-hint">创建共享清单，或用朋友发来的 6 位分享码加入，大家都能实时勾选和增删物品。</p>
+      <div class="row" id="team-entry-actions">
+        <button class="btn primary" id="team-create">创建共享清单</button>
+        <button class="btn" id="team-join">输入分享码</button>
+      </div>
+      <div class="team-current" id="team-current" hidden>
+        <div class="team-current-head">
+          <span>正在共享 <b id="team-current-name">出行清单</b></span>
+          <span class="code" id="team-current-code">—</span>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="team-open">打开共享清单</button>
+          <button class="btn" id="team-copy">复制分享码</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ============ 清单页 ============ -->
   <section id="view-list" hidden>
+    <div class="sharing" id="team-banner" hidden>
+      <div class="share-line">
+        <span class="sync-dot" id="sync-dot"></span>
+        <b>共享清单</b>
+        <span class="share-code" id="team-code">—</span>
+        <span class="sync-label" id="sync-label">正在同步</span>
+        <button class="btn copy-code" id="copy-code">复制分享码</button>
+      </div>
+      <div class="members" id="team-members"></div>
+    </div>
     <div class="prog">
       <div class="top">
         <span class="trip" id="trip-title">—</span>
@@ -236,6 +313,7 @@
         <button class="btn" id="clear-check">清空勾选</button>
         <button class="btn" id="re-setup">重新设置</button>
         <button class="btn danger" id="drop-list">删除清单</button>
+        <button class="btn danger" id="leave-team" hidden>退出共享</button>
       </div>
       <div class="done-tip" id="done-tip" hidden>全部装好了 ✈️ 出发前请再对照一次证件和手机。</div>
       <div class="tplrow">
@@ -261,12 +339,32 @@
   </section>
 
   <footer>
-    <div>清单只保存在本机浏览器，不上传、不需要注册；刷新或关闭页面后数据仍在。</div>
+    <div id="privacy-line">普通清单只保存在本机浏览器；加入共享后，清单内容会同步到当前团队服务器。</div>
     <div id="storage-warn" class="warn" hidden>当前浏览器不允许本地保存，刷新后勾选会丢失（建议用手机浏览器或 Chrome 打开）。</div>
   </footer>
 </div>
 
 <div class="toast" id="toast" hidden></div>
+
+<dialog class="share-dialog" id="share-dialog">
+  <div class="dialog-body">
+    <h2 id="share-dialog-title">创建共享清单</h2>
+    <p class="hint" id="share-dialog-hint"></p>
+    <label class="field" id="share-code-field" hidden>
+      分享码
+      <input id="share-code-input" type="text" maxlength="6" autocomplete="off" spellcheck="false" placeholder="例如 A7K9QX">
+    </label>
+    <label class="field">
+      你的称呼
+      <input id="share-nickname" type="text" maxlength="16" autocomplete="nickname" placeholder="例如 小李">
+    </label>
+    <p class="form-error" id="share-error"></p>
+    <div class="dialog-actions">
+      <button class="btn ghost" id="share-cancel" type="button">取消</button>
+      <button class="btn primary" id="share-submit" type="button">创建</button>
+    </div>
+  </div>
+</dialog>
 
 <script>
 (function () {
@@ -346,6 +444,8 @@
   /* ================= 本地存储（v2：清单 + 每场景一份个人模板） ================= */
   var KEY = "eatwhat.travel-list.v2";
   var LEGACY_KEY = "eatwhat.travel-list.v1";
+  var TEAM_KEY = "eatwhat.travel-list.team.v1";
+  var NICKNAME_KEY = "eatwhat.travel-list.nickname";
   var memoryOnly = false, memoryState = null;
 
   function storageAvailable() {
@@ -441,6 +541,288 @@
   function uid() {
     return "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
+
+  /* ================= 共享房间 ================= */
+  function queryValue(name) {
+    var match = new RegExp("[?&]" + name + "=([^&]*)").exec(location.search);
+    if (!match) return "";
+    try { return decodeURIComponent(match[1].replace(/\+/g, " ")); } catch (e) { return ""; }
+  }
+  function configuredApiBase() {
+    var base = queryValue("api") || window.TEAM_API_BASE || "";
+    return String(base).replace(/\/+$/, "");
+  }
+  function loadTeamSession() {
+    var raw = readRaw(TEAM_KEY);
+    if (!raw) return null;
+    try {
+      var saved = JSON.parse(raw);
+      if (!saved || !saved.code || !saved.memberId || !saved.memberToken) return null;
+      saved.apiBase = typeof saved.apiBase === "string" ? saved.apiBase : "";
+      saved.version = Number(saved.version) || 0;
+      saved.members = isArray(saved.members) ? saved.members : [];
+      saved.roomName = String(saved.roomName || "共享出行清单");
+      saved.syncState = "syncing";
+      return saved;
+    } catch (e) {
+      return null;
+    }
+  }
+  function saveTeamSession() {
+    if (!team) return;
+    var payload = JSON.stringify({
+      code: team.code,
+      memberId: team.memberId,
+      memberToken: team.memberToken,
+      nickname: team.nickname,
+      version: team.version,
+      members: team.members,
+      roomName: team.roomName,
+      apiBase: team.apiBase
+    });
+    try { localStorage.setItem(TEAM_KEY, payload); } catch (e) { showStorageWarn(); }
+  }
+  function clearTeamSession() {
+    try { localStorage.removeItem(TEAM_KEY); } catch (e) { /* 内存模式无需清理 */ }
+  }
+  function favoriteNickname() {
+    try { return localStorage.getItem(NICKNAME_KEY) || ""; } catch (e) { return ""; }
+  }
+  function rememberNickname(name) {
+    try { localStorage.setItem(NICKNAME_KEY, name); } catch (e) { /* 不阻塞共享 */ }
+  }
+  function teamErrorMessage(error) {
+    var messages = {
+      room_not_found: "分享码不存在，请核对后重试",
+      room_full: "这个共享清单已经有 10 位成员",
+      need_nickname: "请填写你的称呼",
+      need_item_name: "物品名称不能为空",
+      not_member: "当前身份已失效，请重新加入",
+      stale: "队友刚刚更新了清单，已为你刷新，请再试一次",
+      already_claimed: "这件物品已被队友认领",
+      item_not_found: "这件物品已被队友删除",
+      unknown_op: "当前版本不支持这个操作",
+      "Failed to fetch": "连接不到团队服务器，请检查网络或服务是否启动"
+    };
+    return messages[error] || "同步失败，请稍后重试";
+  }
+  function teamApi(path, options) {
+    var opts = options || {};
+    var base = team && typeof team.apiBase === "string" ? team.apiBase : configuredApiBase();
+    var init = {
+      method: opts.method || "GET",
+      headers: { "Content-Type": "application/json" }
+    };
+    if (opts.body) init.body = JSON.stringify(opts.body);
+    return fetch(base + path, init).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (data) {
+        if (!response.ok || data.ok === false) {
+          var error = new Error(teamErrorMessage(data.error));
+          error.code = data.error || "http_" + response.status;
+          error.data = data;
+          throw error;
+        }
+        return data;
+      });
+    }, function () {
+      throw new Error(teamErrorMessage("Failed to fetch"));
+    });
+  }
+  function roomToTrip(room) {
+    var scene = SCENES[room.scene] ? room.scene : "business";
+    var days = Math.max(1, Math.min(30, Number(room.days) || SCENES[scene].days));
+    var catAliases = { "证件": "id", "电子": "elec", "衣物": "cloth", "洗漱": "wash", "药品": "med", "其他": "misc" };
+    return {
+      scene: scene,
+      days: days,
+      createdAt: room.updatedAt || Date.now(),
+      shared: true,
+      roomName: room.tripName || "共享出行清单",
+      items: room.items.map(function (it) {
+        var cat = catAliases[it.cat] || it.cat;
+        if (!catName[cat]) cat = "misc";
+        var qty = Math.max(1, Math.min(99, Number(it.qty) || 1));
+        var name = String(it.name || "");
+        if (qty > 1 && !/[×x]\s*\d+$/i.test(name)) name += " ×" + qty;
+        return {
+          id: it.id,
+          cat: cat,
+          raw: String(it.name || ""),
+          name: name,
+          custom: true,
+          done: !!it.done,
+          owner: it.owner || null
+        };
+      })
+    };
+  }
+  function applyTeamRoom(room) {
+    if (!team) return;
+    team.version = Number(room.version) || 0;
+    team.members = isArray(room.members) ? room.members : [];
+    team.roomName = room.tripName || "共享出行清单";
+    team.lastSyncedAt = Date.now();
+    state.trip = roomToTrip(room);
+    state.scene = state.trip.scene;
+    state.days = state.trip.days;
+    undoStack = [];
+    save();
+    saveTeamSession();
+    setTeamSyncState("online");
+    renderTeam();
+    if (!$("#view-list").hidden) renderList();
+    if (!$("#view-setup").hidden) renderSetup();
+  }
+  function memberName(memberId) {
+    if (!team || !memberId) return "";
+    for (var i = 0; i < team.members.length; i++) {
+      if (team.members[i].id === memberId) return team.members[i].nickname;
+    }
+    return "";
+  }
+  function setTeamSyncState(next) {
+    if (!team) return;
+    team.syncState = next;
+    var dot = $("#sync-dot"), label = $("#sync-label");
+    if (!dot || !label) return;
+    dot.className = "sync-dot" + (next === "syncing" ? " syncing" : next === "offline" ? " offline" : "");
+    label.textContent = next === "syncing" ? "同步中" : next === "offline" ? "连接中断" : "已同步";
+  }
+  function renderTeam() {
+    var active = !!team;
+    $("#team-banner").hidden = !active;
+    $("#team-current").hidden = !active;
+    $("#team-entry-actions").hidden = active;
+    $("#drop-list").hidden = active;
+    $("#leave-team").hidden = !active;
+    $("#privacy-line").textContent = active
+      ? "共享中的清单会同步到当前团队服务器；个人模板仍只保存在本机。"
+      : "普通清单只保存在本机浏览器；创建或加入共享后，清单内容会同步到当前团队服务器。";
+
+    var gen = $("#gen");
+    gen.disabled = active;
+    gen.textContent = active ? "共享清单进行中" : "生成打包清单";
+    $("#team-entry-hint").textContent = active
+      ? "当前清单正在共享。队友的勾选和增删会自动同步到这台设备。"
+      : "创建共享清单，或用朋友发来的 6 位分享码加入，大家都能实时勾选和增删物品。";
+    if (!active) return;
+
+    $("#team-code").textContent = team.code;
+    $("#team-current-code").textContent = team.code;
+    $("#team-current-name").textContent = team.roomName;
+    var members = $("#team-members");
+    members.innerHTML = "";
+    team.members.forEach(function (member) {
+      var tag = el("span", "member" + (member.id === team.memberId ? " me" : ""),
+        member.nickname + (member.id === team.memberId ? "（我）" : ""));
+      members.appendChild(tag);
+    });
+    setTeamSyncState(team.syncState || "syncing");
+  }
+  function stopTeamSync() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+  function pollTeamRoom() {
+    if (!team) return Promise.resolve(false);
+    var session = team;
+    if (team.syncState !== "online") setTeamSyncState("syncing");
+    return teamApi("/api/room?code=" + encodeURIComponent(team.code) + "&since=" + encodeURIComponent(team.version))
+      .then(function (data) {
+        if (!team || team !== session) return false;
+        if (data.changed && data.room) {
+          applyTeamRoom(data.room);
+          return true;
+        }
+        team.lastSyncedAt = Date.now();
+        setTeamSyncState("online");
+        return false;
+      })
+      .catch(function (error) {
+        if (team === session) setTeamSyncState("offline");
+        return false;
+      });
+  }
+  function startTeamSync() {
+    stopTeamSync();
+    if (!team) return;
+    pollTeamRoom();
+    pollTimer = setInterval(function () {
+      if (!document.hidden) pollTeamRoom();
+    }, 2500);
+  }
+  function queueTeamOps(buildOps, successText) {
+    if (!team) return Promise.resolve(false);
+    var run = function () {
+      if (!team) return false;
+      var ops = buildOps(team.version);
+      if (!ops || !ops.length) return true;
+      var session = team;
+      setTeamSyncState("syncing");
+      var submitOps = function (list) {
+        return teamApi("/api/ops", {
+          method: "POST",
+          body: {
+            code: team.code,
+            memberId: team.memberId,
+            memberToken: team.memberToken,
+            ops: list
+          }
+        }).then(function (data) {
+          if (team === session) {
+            applyTeamRoom(data.room);
+            if (successText) toast(successText);
+          }
+          return true;
+        });
+      };
+      var handleError = function (error) {
+        if (team === session) setTeamSyncState("offline");
+        if (error.code === "stale" || error.code === "item_not_found" || error.code === "already_claimed") {
+          pollTeamRoom();
+        }
+        toast(error.message);
+        return false;
+      };
+      return submitOps(ops).catch(function (error) {
+        var addOnly = ops.every(function (op) { return op.type === "addItem"; });
+        if (error.code === "stale" && addOnly && team === session) {
+          return pollTeamRoom().then(function () {
+            if (team !== session) return false;
+            return submitOps(buildOps(team.version));
+          }).catch(handleError);
+        }
+        return handleError(error);
+      });
+    };
+    teamOpsQueue = teamOpsQueue.then(run, run);
+    return teamOpsQueue;
+  }
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return false; });
+    }
+    try {
+      var input = document.createElement("textarea");
+      input.value = text;
+      input.style.position = "fixed";
+      input.style.opacity = "0";
+      document.body.appendChild(input);
+      input.select();
+      var copied = document.execCommand("copy");
+      document.body.removeChild(input);
+      return Promise.resolve(copied);
+    } catch (e) {
+      return Promise.resolve(false);
+    }
+  }
+
+  var team = loadTeamSession();
+  var teamOpsQueue = Promise.resolve();
+  var pollTimer = null;
+
   /* ================= 状态 ================= */
   var boot = loadAll();
   var state = {
@@ -537,25 +919,30 @@
     if (state.trip) {
       var t = state.trip, done = countDone(t);
       r.innerHTML = "";
-      r.appendChild(el("b", null, "继续上次的清单：" + SCENES[t.scene].name + " · " + String(t.days) + "天"));
+      r.appendChild(el("b", null, (team ? "继续共享清单：" : "继续上次的清单：") +
+        (team ? team.roomName : SCENES[t.scene].name + " · " + String(t.days) + "天")));
       var line = el("div", "hint", "共 " + t.items.length + " 件，已勾选 " + done + " 件（" + pct(done, t.items.length) + "%）");
       r.appendChild(line);
       var row = el("div", "row");
-      var go = el("button", "btn primary", "继续核对");
+      var go = el("button", "btn primary", team ? "打开共享清单" : "继续核对");
       go.type = "button";
       go.addEventListener("click", showList);
-      var drop = el("button", "btn ghost", "删除这份清单");
-      drop.type = "button";
-      drop.addEventListener("click", function () {
-        if (!confirm("删除这份清单？此操作不可撤销。")) return;
-        state.trip = null; save(); renderSetup(); toast("已删除清单");
-      });
-      row.appendChild(go); row.appendChild(drop);
+      row.appendChild(go);
+      if (!team) {
+        var drop = el("button", "btn ghost", "删除这份清单");
+        drop.type = "button";
+        drop.addEventListener("click", function () {
+          if (!confirm("删除这份清单？此操作不可撤销。")) return;
+          state.trip = null; save(); renderSetup(); toast("已删除清单");
+        });
+        row.appendChild(drop);
+      }
       r.appendChild(row);
       r.hidden = false;
     } else {
       r.hidden = true;
     }
+    renderTeam();
   }
 
   /* ================= 清单页渲染（P0-3 勾选 / P0-4 新增 / P0-5 删除） ================= */
@@ -569,7 +956,9 @@
   function renderList() {
     var t = state.trip;
     if (!t) return;
-    $("#trip-title").textContent = SCENES[t.scene].icon + " " + SCENES[t.scene].name + " · " + String(t.days) + " 天";
+    $("#trip-title").textContent = team && t.roomName
+      ? t.roomName
+      : SCENES[t.scene].icon + " " + SCENES[t.scene].name + " · " + String(t.days) + " 天";
 
     var done = countDone(t), total = t.items.length, p = pct(done, total);
     $("#trip-pct").textContent = p + "%";
@@ -602,6 +991,12 @@
       all.type = "button";
       all.addEventListener("click", function () {
         var target = d !== list.length;
+        if (team) {
+          queueTeamOps(function () {
+            return list.map(function (it) { return { type: "toggle", itemId: it.id, done: target }; });
+          }, target ? "已勾选这一类的 " + list.length + " 件物品" : "已取消这一类的勾选");
+          return;
+        }
         list.forEach(function (it) { it.done = target; });
         save(); renderList();
       });
@@ -617,9 +1012,44 @@
         hit.appendChild(el("span", "name", it.name));
         if (it.custom) hit.appendChild(el("span", "tag", "自定义"));
         hit.addEventListener("click", function () {
+          if (team) {
+            queueTeamOps(function () {
+              return [{ type: "toggle", itemId: it.id, done: !it.done }];
+            });
+            return;
+          }
           it.done = !it.done; save(); renderList();
         });
         row.appendChild(hit);
+
+        if (team) {
+          var ownerName = memberName(it.owner);
+          if (!it.owner) {
+            var claim = el("button", "owner-tag", "我负责");
+            claim.type = "button";
+            claim.title = "认领这件物品";
+            claim.addEventListener("click", function () {
+              queueTeamOps(function () {
+                return [{ type: "claim", itemId: it.id }];
+              }, "你已认领「" + it.name + "」");
+            });
+            row.appendChild(claim);
+          } else {
+            var mine = it.owner === team.memberId;
+            var ownerTag = el(mine ? "button" : "span", "owner-tag" + (mine ? " mine" : ""),
+              mine ? "我负责" : (ownerName || "队友"));
+            if (mine) {
+              ownerTag.type = "button";
+              ownerTag.title = "取消认领";
+              ownerTag.addEventListener("click", function () {
+                queueTeamOps(function () {
+                  return [{ type: "claim", itemId: it.id, unclaim: true }];
+                }, "已取消认领「" + it.name + "」");
+              });
+            }
+            row.appendChild(ownerTag);
+          }
+        }
 
         var del = el("button", "del", "×");
         del.type = "button";
@@ -668,6 +1098,16 @@
     var t = state.trip;
     var idx = t.items.indexOf(it);
     if (idx < 0) return;
+    if (team) {
+      queueTeamOps(function () {
+        return [{ type: "removeItem", itemId: it.id, base: team.version }];
+      }, "已删除「" + it.name + "」").then(function (ok) {
+        if (!ok) return;
+        undoStack.push({ item: it, at: idx, trip: state.trip });
+        toast("已删除「" + it.name + "」", undoStack.length > 1 ? ("撤销 " + undoStack.length + " 件") : "撤销", undoDelete);
+      });
+      return;
+    }
     t.items.splice(idx, 1);
     undoStack.push({ item: it, at: idx, trip: t });
     save(); renderList();
@@ -678,6 +1118,21 @@
   function undoDelete() {
     var last = undoStack.pop();
     if (!last || last.trip !== state.trip) return;   // 清单已被替换/重新生成，旧撤销作废
+    if (team) {
+      queueTeamOps(function () {
+        return [{
+          type: "addItem",
+          base: team.version,
+          name: last.item.raw || last.item.name,
+          cat: last.item.cat,
+          qty: 1
+        }];
+      }, "已恢复「" + last.item.name + "」").then(function (ok) {
+        if (!ok) undoStack.push(last);
+        else if (undoStack.length) toast("已恢复 1 件，还可撤销 " + undoStack.length + " 件", "继续撤销", undoDelete);
+      });
+      return;
+    }
     last.trip.items.splice(Math.min(last.at, last.trip.items.length), 0, last.item);
     save(); renderList();
     if (undoStack.length) {
@@ -693,6 +1148,12 @@
     if (t.items.some(function (it) { return it.cat === cat && it.name === name; })) {
       toast("这一类里已经有「" + name + "」了");
       return false;
+    }
+    if (team) {
+      queueTeamOps(function () {
+        return [{ type: "addItem", base: team.version, name: name, cat: cat, qty: 1 }];
+      }, "已添加「" + name + "」到「" + catName[cat].name + "」");
+      return true;
     }
     t.items.push({ id: uid(), cat: cat, raw: name, name: name, done: false, custom: true });
     save(); renderList();
@@ -736,6 +1197,135 @@
     toast("已清除「" + SCENES[scene].name + "」模板");
   }
 
+  /* ================= 创建 / 加入共享 ================= */
+  var shareMode = "create", shareSubmitting = false;
+
+  function setShareBusy(busy) {
+    shareSubmitting = busy;
+    $("#share-submit").disabled = busy;
+    $("#share-submit").textContent = busy
+      ? (shareMode === "create" ? "正在创建…" : "正在加入…")
+      : (shareMode === "create" ? "创建" : "加入");
+  }
+  function openShareDialog(mode, code) {
+    shareMode = mode === "join" ? "join" : "create";
+    var joining = shareMode === "join";
+    $("#share-dialog-title").textContent = joining ? "加入共享清单" : "创建共享清单";
+    $("#share-dialog-hint").textContent = joining
+      ? "输入朋友发来的 6 位分享码。加入后会切换到团队正在编辑的清单。"
+      : "用当前场景和物品创建一份共享清单。创建后会生成 6 位分享码。";
+    $("#share-code-field").hidden = !joining;
+    $("#share-code-input").value = joining ? String(code || "").toUpperCase().slice(0, 6) : "";
+    $("#share-nickname").value = favoriteNickname();
+    $("#share-error").textContent = "";
+    setShareBusy(false);
+    var dialog = $("#share-dialog");
+    if (!dialog.open) dialog.showModal();
+    setTimeout(function () {
+      if (joining && !$("#share-code-input").value) $("#share-code-input").focus();
+      else $("#share-nickname").focus();
+    }, 0);
+  }
+  function closeShareDialog() {
+    var dialog = $("#share-dialog");
+    if (dialog.open) dialog.close();
+    setShareBusy(false);
+  }
+  function beginTeamSession(data) {
+    team = {
+      apiBase: configuredApiBase(),
+      code: data.room.code,
+      memberId: data.memberId,
+      memberToken: data.memberToken,
+      nickname: String($("#share-nickname").value || "").trim().slice(0, 16),
+      version: data.room.version,
+      members: data.room.members,
+      roomName: data.room.tripName,
+      syncState: "online"
+    };
+    saveTeamSession();
+    applyTeamRoom(data.room);
+    rememberNickname(team.nickname);
+    closeShareDialog();
+    showList();
+    startTeamSync();
+  }
+  function submitShareDialog() {
+    if (shareSubmitting || team) return;
+    var nickname = String($("#share-nickname").value || "").trim().slice(0, 16);
+    var code = String($("#share-code-input").value || "").trim().toUpperCase();
+    var err = $("#share-error");
+    err.textContent = "";
+    if (!nickname) {
+      err.textContent = "请填写你的称呼";
+      $("#share-nickname").focus();
+      return;
+    }
+    if (shareMode === "join" && !/^[A-HJ-NP-Z2-9]{6}$/.test(code)) {
+      err.textContent = "请输入正确的 6 位分享码";
+      $("#share-code-input").focus();
+      return;
+    }
+    if (shareMode === "join" && state.trip &&
+        !confirm("加入后会切换到团队的共享清单，本机当前清单会被替换（个人模板不受影响）。继续？")) {
+      return;
+    }
+
+    var body;
+    var endpoint;
+    if (shareMode === "create") {
+      var source = state.trip;
+      var scene = source ? source.scene : state.scene;
+      var days = source ? source.days : state.days;
+      var items = source && source.items.length ? source.items : buildItems(scene, days);
+      body = {
+        nickname: nickname,
+        teamName: "我们的出行清单",
+        tripName: SCENES[scene].name + " · " + days + " 天",
+        scene: scene,
+        days: days,
+        items: items.map(function (it) {
+          return { name: it.name, cat: it.cat, qty: 1 };
+        })
+      };
+      endpoint = "/api/create";
+    } else {
+      body = { code: code, nickname: nickname };
+      endpoint = "/api/join";
+    }
+
+    setShareBusy(true);
+    teamApi(endpoint, { method: "POST", body: body }).then(function (data) {
+      beginTeamSession(data);
+      toast(shareMode === "create"
+        ? "共享清单已创建，分享码 " + data.room.code
+        : "已加入共享清单 " + data.room.code);
+    }).catch(function (error) {
+      err.textContent = error.message;
+      setShareBusy(false);
+    });
+  }
+  function copyShareCode(source) {
+    if (!team) return;
+    copyText(team.code).then(function (ok) {
+      if (ok) toast("分享码 " + team.code + " 已复制");
+      else toast("复制失败，请手动记录分享码 " + team.code);
+      if (source === "setup") renderSetup();
+    });
+  }
+  function leaveTeam() {
+    if (!team) return;
+    if (!confirm("退出共享清单？本机会保留当前清单副本，但之后不再同步队友的修改。")) return;
+    team = null;
+    clearTeamSession();
+    stopTeamSync();
+    undoStack = [];
+    renderTeam();
+    save();
+    showSetup();
+    toast("已退出共享，当前清单已保留在本机");
+  }
+
   /* ================= 视图切换 ================= */
   function showList() {
     if (!state.trip) return;
@@ -752,6 +1342,10 @@
     window.scrollTo(0, 0);
   }
   function generate() {
+    if (team) {
+      toast("共享清单进行中，退出共享后才能重新生成");
+      return;
+    }
     if (state.trip && state.trip.items.length) {
       var done = countDone(state.trip);
       var msg = "重新生成会覆盖当前清单" + (done ? "（已勾选 " + done + " 件）" : "") +
@@ -830,13 +1424,46 @@
       var t = state.trip;
       if (!t || countDone(t) === 0) { toast("当前没有已勾选的物品"); return; }
       if (!confirm("清空所有勾选，回到“未打包”状态？")) return;
+      if (team) {
+        queueTeamOps(function () {
+          return t.items.filter(function (it) { return it.done; }).map(function (it) {
+            return { type: "toggle", itemId: it.id, done: false };
+          });
+        }, "已清空勾选");
+        return;
+      }
       t.items.forEach(function (it) { it.done = false; });
       save(); renderList(); toast("已清空勾选");
     });
 
     $("#drop-list").addEventListener("click", function () {
+      if (team) { toast("请先退出共享，再删除本机清单"); return; }
       if (!confirm("删除这份清单？此操作不可撤销。")) return;
       state.trip = null; save(); showSetup(); toast("已删除清单");
+    });
+
+    $("#team-create").addEventListener("click", function () { openShareDialog("create"); });
+    $("#team-join").addEventListener("click", function () { openShareDialog("join"); });
+    $("#team-open").addEventListener("click", showList);
+    $("#team-copy").addEventListener("click", function () { copyShareCode("setup"); });
+    $("#copy-code").addEventListener("click", function () { copyShareCode("list"); });
+    $("#leave-team").addEventListener("click", leaveTeam);
+    $("#share-cancel").addEventListener("click", closeShareDialog);
+    $("#share-submit").addEventListener("click", submitShareDialog);
+    $("#share-dialog").addEventListener("click", function (event) {
+      if (event.target === this && !shareSubmitting) closeShareDialog();
+    });
+    $("#share-code-input").addEventListener("input", function () {
+      this.value = this.value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g, "").slice(0, 6);
+    });
+    $("#share-code-input").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") submitShareDialog();
+    });
+    $("#share-nickname").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") submitShareDialog();
+    });
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden && team) pollTeamRoom();
     });
   }
 
@@ -844,7 +1471,23 @@
   if (!storageAvailable()) { memoryOnly = true; showStorageWarn(); }
   bind();
   if (boot.migrated) { save(); toast("已把本地数据升级到新格式，原清单保留"); }
-  if (state.trip) showList(); else showSetup();
+  if (team) {
+    renderTeam();
+    if (state.trip) showList();
+    else {
+      showSetup();
+      pollTeamRoom().then(function () {
+        if (team && state.trip) showList();
+      });
+    }
+    startTeamSync();
+  } else {
+    if (state.trip) showList(); else showSetup();
+  }
+  var inviteCode = queryValue("share");
+  if (inviteCode && !team) {
+    setTimeout(function () { openShareDialog("join", inviteCode); }, 120);
+  }
 })();
 </script>
 </body>

@@ -1,6 +1,12 @@
 # 本地验收产物（截图 / 验证副本 / headless Edge profile），不进入公开仓库
 .verify/
 
+# 组队本地替身的运行时数据（房间 JSON），只属于开发期
+.teamdata/
+
+# 临时公网隧道二进制与日志，不进入仓库
+.tools/
+
 # 系统垃圾文件
 Thumbs.db
 Desktop.ini

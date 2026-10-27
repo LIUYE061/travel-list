@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "travel-list-shell-v3";
+const CACHE_NAME = "travel-list-shell-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -45,6 +45,7 @@ self.addEventListener("fetch", function (event) {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.indexOf("/api/") === 0) return;
 
   if (request.mode === "navigate") {
     event.respondWith(
