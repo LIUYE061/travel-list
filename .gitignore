@@ -16,3 +16,8 @@ cloudfunctions/**/public/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Tencent Cloud EdgeOne
+.env
+.edgeone/*
+.tef_dist/*
